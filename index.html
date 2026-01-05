@@ -7,9 +7,60 @@
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css">
     <link rel="icon" type="image/png" href="https://www.gov.br/antaq/pt-br/@@site-logo/logo-antaq.svg">
     <style>
+        /* Força tema claro independente das preferências do sistema */
+        :root {
+            color-scheme: light only;
+        }
         html {
             box-sizing: border-box;
             overflow-y: scroll;
+            color-scheme: light;
+        }
+        /* Override para forçar cores claras mesmo em dark mode */
+        @media (prefers-color-scheme: dark) {
+            html, body {
+                background: #fafafa !important;
+                color: #3b4151 !important;
+            }
+            .swagger-ui {
+                background: #fafafa !important;
+            }
+            .swagger-ui .opblock-tag,
+            .swagger-ui .opblock-tag small,
+            .swagger-ui .info .title,
+            .swagger-ui .info .base-url,
+            .swagger-ui .scheme-container,
+            .swagger-ui table thead tr th,
+            .swagger-ui table tbody tr td,
+            .swagger-ui .model-title,
+            .swagger-ui .model,
+            .swagger-ui .responses-inner,
+            .swagger-ui .response-col_status,
+            .swagger-ui .response-col_description,
+            .swagger-ui .parameter__name,
+            .swagger-ui .parameter__type,
+            .swagger-ui .parameter__in,
+            .swagger-ui label,
+            .swagger-ui .btn,
+            .swagger-ui select {
+                color: #3b4151 !important;
+            }
+            .swagger-ui .opblock .opblock-summary-description,
+            .swagger-ui .opblock .opblock-description-wrapper p,
+            .swagger-ui .opblock .opblock-section-header h4,
+            .swagger-ui .markdown p,
+            .swagger-ui .markdown li {
+                color: #3b4151 !important;
+            }
+            .swagger-ui .opblock-body,
+            .swagger-ui .opblock .opblock-section-header {
+                background: #fff !important;
+            }
+            .swagger-ui input[type=text],
+            .swagger-ui textarea {
+                background: #fff !important;
+                color: #3b4151 !important;
+            }
         }
         *,
         *:before,
@@ -19,6 +70,7 @@
         body {
             margin: 0;
             background: #fafafa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         /* Customização do header */
         .swagger-ui .topbar {
@@ -88,7 +140,7 @@
 </head>
 <body>
     <div class="custom-header">
-        <img src="https://www.gov.br/antaq/pt-br/@@site-logo/logo-antaq.svg" alt="ANTAQ" onerror="this.style.display='none'">
+        <img src="https://des-apex.antaq.gov.br/ords/r/sfc_dev/files/static/v76/img/app-105-logo.png" alt="ANTAQ" onerror="this.style.display='none'">
         <div>
             <h1>SISPAT - API de Bens Patrimoniais <span class="version-badge">v2.1.0</span></h1>
             <p>Agência Nacional de Transportes Aquaviários - ANTAQ</p>

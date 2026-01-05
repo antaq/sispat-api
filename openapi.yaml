@@ -530,15 +530,21 @@ components:
           example: "50 toneladas"
         capitulo:
           type: integer
-          description: Capítulo NCM.
+          description: |
+            Capítulo NCM (Nomenclatura Comum do Mercosul).
+            A combinação de capítulo + posição + subposição é validada contra a tabela SISPAT_SUBPOSICOES.
           example: 84
         posicao:
           type: integer
-          description: Posição NCM.
+          description: |
+            Posição NCM.
+            A combinação de capítulo + posição + subposição é validada contra a tabela SISPAT_SUBPOSICOES.
           example: 26
         subposicao:
           type: integer
-          description: Subposição NCM.
+          description: |
+            Subposição NCM.
+            A combinação de capítulo + posição + subposição é validada contra a tabela SISPAT_SUBPOSICOES.
           example: 20
         cor:
           type: string
@@ -683,13 +689,13 @@ components:
           type: integer
           description: |
             Tipo do bem.
-            - 1: União (Tipo 1)
-            - 2: União (Tipo 2)
-            - 3: União (Tipo 3)
-            - 4: Terceiros
-            - 5: Próprios (Tipo 1)
-            - 6: Próprios (Tipo 2)
-            - 7: Imobilizado
+            - 1: Bens da União - Administração
+            - 2: Bens da União - Operação
+            - 3: Bens da União - Terceiros
+            - 4: Bens de Terceiros
+            - 5: Bens Próprios - Administração
+            - 6: Bens Próprios - Operação
+            - 7: Imobilizado em Andamento
           enum: [1, 2, 3, 4, 5, 6, 7]
           example: 5
         grupo_de_bens:
@@ -697,13 +703,26 @@ components:
           description: |
             Grupo de bens patrimoniais.
             - 1: Terrenos
-            - 2: Edifícios
+            - 2: Edifícios e Benfeitorias
             - 3: Instalações
-            - 4: Máquinas e Equipamentos
+            - 4: Máquinas
+            - 5: Aparelhos
+            - 6: Equipamentos
+            - 7: Equipamentos de Informática
+            - 8: Sistemas Aplicativos (Softwares)
+            - 9: Móveis e Utensílios
             - 10: Veículos
+            - 11: Ferramentas
+            - 12: Peças e Conjuntos de Reposição
+            - 13: Benfeitorias em Propriedades Arrendadas
+            - 14: Não Aplicável
             - 15: Infraestrutura Marítima
+            - 16: Infraestrutura Acostagem
             - 17: Infraestrutura Terrestre
-          enum: [1, 2, 3, 4, 10, 15, 17]
+            - 18: Armazenagem
+            - 19: Equipamentos de Armazenagem
+            - 20: Outros Equipamentos
+          enum: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
           example: 4
         vinculacao_contratual:
           type: integer
@@ -762,7 +781,9 @@ components:
           example: 2
         desc_deprec_especial:
           type: string
-          description: Justificativa para depreciação especial.
+          description: |
+            Justificativa para depreciação especial.
+            **Obrigatório quando depreciacao_especial = 1 (Sim).**
           example: "Bem com vida útil reduzida devido ao uso intensivo."
 
     BemPatrimonialInput:
@@ -825,15 +846,21 @@ components:
           example: "GND"
         capitulo:
           type: string
-          description: Capítulo NCM.
+          description: |
+            Capítulo NCM (Nomenclatura Comum do Mercosul).
+            A combinação de capítulo + posição + subposição é validada contra a tabela SISPAT_SUBPOSICOES.
           example: "84"
         posicao:
           type: string
-          description: Posição NCM.
+          description: |
+            Posição NCM.
+            A combinação de capítulo + posição + subposição é validada contra a tabela SISPAT_SUBPOSICOES.
           example: "26"
         subposicao:
           type: string
-          description: Subposição NCM.
+          description: |
+            Subposição NCM.
+            A combinação de capítulo + posição + subposição é validada contra a tabela SISPAT_SUBPOSICOES.
           example: "20"
         nome_item:
           type: string
@@ -857,17 +884,48 @@ components:
           description: Capacidade do bem.
           example: "50 toneladas"
         unidade_de_medida:
-          type: string
-          description: Unidade de medida.
-          example: "UN"
+          type: integer
+          minimum: 1
+          maximum: 17
+          description: |
+            Unidade de medida do bem.
+            - 1: Não Informado
+            - 2: Caixa
+            - 3: Coleção
+            - 4: Conjunto
+            - 5: Equipamento
+            - 6: Jogo
+            - 7: KG
+            - 8: KM
+            - 9: Litro
+            - 10: M²
+            - 11: M³
+            - 12: Metro
+            - 13: Par
+            - 14: Parte
+            - 15: Peça
+            - 16: Tonelada
+            - 17: Unidade
+          enum: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
+          example: 17
         latitude:
-          type: string
-          description: Latitude da localização.
-          example: "-23.9618"
+          type: number
+          format: double
+          minimum: -90
+          maximum: 90
+          description: |
+            Latitude da localização em coordenadas WGS84.
+            Deve estar entre -90 e 90.
+          example: -23.9618
         longitude:
-          type: string
-          description: Longitude da localização.
-          example: "-46.3322"
+          type: number
+          format: double
+          minimum: -180
+          maximum: 180
+          description: |
+            Longitude da localização em coordenadas WGS84.
+            Deve estar entre -180 e 180.
+          example: -46.3322
         destinacao:
           type: string
           description: Destinação do bem.
@@ -893,9 +951,13 @@ components:
           description: Data de tombamento (YYYY-MM-DD).
           example: "2024-01-15"
         valor_original_de_compra:
-          type: string
-          description: Valor original de compra em moeda corrente.
-          example: "1500000.00"
+          type: number
+          format: double
+          minimum: 0
+          description: |
+            Valor original de compra em moeda corrente (BRL).
+            Não pode ser negativo.
+          example: 1500000.00
         fonte_de_recurso:
           type: integer
           description: |
@@ -907,21 +969,37 @@ components:
           enum: [1, 2, 3, 4]
           example: 1
         valor_justo_de_mercado:
-          type: string
-          description: Valor justo de mercado.
-          example: "1400000.00"
+          type: number
+          format: double
+          minimum: 0
+          description: |
+            Valor justo de mercado em moeda corrente (BRL).
+            Não pode ser negativo.
+          example: 1400000.00
         valor_residual:
-          type: string
-          description: Valor residual.
-          example: "150000.00"
+          type: number
+          format: double
+          minimum: 0
+          description: |
+            Valor residual do bem em moeda corrente (BRL).
+            Não pode ser negativo.
+          example: 150000.00
         vida_util_anos:
-          type: string
-          description: Vida útil em anos.
-          example: "20"
+          type: integer
+          minimum: 1
+          description: |
+            Vida útil do bem em anos.
+            Deve ser maior que zero.
+          example: 20
         taxa_depreciacao:
-          type: string
-          description: Taxa de depreciação anual (%).
-          example: "5.00"
+          type: number
+          format: double
+          minimum: 0
+          maximum: 100
+          description: |
+            Taxa de depreciação anual em percentual.
+            Deve estar entre 0 e 100.
+          example: 5.00
         data_de_avaliacao:
           type: string
           format: date
@@ -1002,13 +1080,13 @@ components:
           type: integer
           description: |
             Tipo do bem.
-            - 1: União (Tipo 1)
-            - 2: União (Tipo 2)
-            - 3: União (Tipo 3)
-            - 4: Terceiros
-            - 5: Próprios (Tipo 1)
-            - 6: Próprios (Tipo 2)
-            - 7: Imobilizado
+            - 1: Bens da União - Administração
+            - 2: Bens da União - Operação
+            - 3: Bens da União - Terceiros
+            - 4: Bens de Terceiros
+            - 5: Bens Próprios - Administração
+            - 6: Bens Próprios - Operação
+            - 7: Imobilizado em Andamento
           enum: [1, 2, 3, 4, 5, 6, 7]
           example: 5
         grupo_de_bens:
@@ -1016,13 +1094,26 @@ components:
           description: |
             Grupo de bens patrimoniais.
             - 1: Terrenos
-            - 2: Edifícios
+            - 2: Edifícios e Benfeitorias
             - 3: Instalações
-            - 4: Máquinas e Equipamentos
+            - 4: Máquinas
+            - 5: Aparelhos
+            - 6: Equipamentos
+            - 7: Equipamentos de Informática
+            - 8: Sistemas Aplicativos (Softwares)
+            - 9: Móveis e Utensílios
             - 10: Veículos
+            - 11: Ferramentas
+            - 12: Peças e Conjuntos de Reposição
+            - 13: Benfeitorias em Propriedades Arrendadas
+            - 14: Não Aplicável
             - 15: Infraestrutura Marítima
+            - 16: Infraestrutura Acostagem
             - 17: Infraestrutura Terrestre
-          enum: [1, 2, 3, 4, 10, 15, 17]
+            - 18: Armazenagem
+            - 19: Equipamentos de Armazenagem
+            - 20: Outros Equipamentos
+          enum: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
           example: 4
         sigla_uf:
           type: string

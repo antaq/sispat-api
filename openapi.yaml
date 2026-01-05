@@ -1,25 +1,37 @@
 openapi: 3.0.3
-externalDocs:
-  description: Baixar Guia Oficial de Integração (PDF)
-  url: >-
-    https://des-apex.antaq.gov.br/ords/r/sfc_dev/147/files/static/v41/GUIA_API_SISPAT_LATEX%20(1).pdf
 info:
   title: SISPAT - API de Bens Patrimoniais
   version: 2.1.0
   description: |
     # SISPAT - API de Bens Patrimoniais
 
-    [**BAIXAR GUIA COMPLETO DE INTEGRAÇÃO (PDF)**](https://des-apex.antaq.gov.br/ords/r/sfc_dev/147/files/static/v41/GUIA_API_SISPAT_LATEX%20(1).pdf)
+    API REST do **Sistema de Controle Patrimonial dos Portos Organizados (SisPAT)**, desenvolvida em Oracle APEX pela ANTAQ.
 
-    ## Introdução
+    ---
 
-    A **SISPAT - API de Bens Patrimoniais** permite a consulta e a manutenção de bens patrimoniais cadastrados no Sistema de Bens Patrimoniais (SISPAT) da ANTAQ.
+    ## Visão Geral
 
-    Esta API foi projetada para integração de sistemas de gestão, portais e aplicações internas ou externas que necessitam acessar informações de bens, tais como:
-    - Identificação do bem e dados de tombamento;
-    - Localização geográfica e administrativa;
-    - Situação, natureza, grupo de bens;
-    - Valores contábeis, valor justo e depreciação.
+    Esta API permite que sistemas externos gerenciem o inventário de bens patrimoniais de forma automatizada, executando as operações fundamentais:
+
+    - **Consultar (GET):** Ler registros de bens existentes
+    - **Cadastrar/Atualizar (PUT):** Inserir novos registros ou modificar existentes (Upsert)
+
+    ### Dados Disponíveis
+    - Identificação do bem e dados de tombamento
+    - Localização geográfica (coordenadas WGS84) e administrativa
+    - Situação, natureza, grupo de bens
+    - Valores contábeis, valor justo e depreciação
+
+    ---
+
+    ## Protocolo de Comunicação
+
+    | Aspecto | Especificação |
+    |---------|---------------|
+    | Protocolo | REST (Representational State Transfer) |
+    | Formato | JSON (application/json) |
+    | Charset | UTF-8 |
+    | Segurança | HTTPS obrigatório |
 
     ---
 
@@ -27,21 +39,30 @@ info:
 
     A API utiliza validação estrita de chaves para separar os ambientes. O acesso é determinado pelo **prefixo** da sua chave (`x-api-key`).
 
+    ### Como Obter sua API Key
+
+    1. Acesse o sistema SisPAT com suas credenciais
+    2. Navegue até **"Gerenciador de API"**
+    3. Gere uma nova credencial
+
+    > **Atenção:** A chave é pessoal e intransferível. Ela concede poderes de leitura e escrita nos dados da sua organização. Mantenha-a em sigilo absoluto.
+
     ### Produção (Oficial)
-    - **Base URL**: `https://prd-apex.antaq.gov.br/ords/sfc/sispat/bens`
-    - **Padrão da Chave**: Inicia obrigatoriamente com `sispat_live...`
-    - **Uso**: Dados oficiais e definitivos com valor regulatório.
+    - **Base URL:** `https://prd-apex.antaq.gov.br/ords/sfc/sispat/bens`
+    - **Padrão da Chave:** Inicia obrigatoriamente com `sispat_live_...`
+    - **Uso:** Dados oficiais e definitivos com valor regulatório
 
     ### Desenvolvimento (Sandbox)
-    - **Base URL**: `https://des-apex.antaq.gov.br/ords/sfc_dev/sispat/bens`
-    - **Padrão da Chave**: Inicia obrigatoriamente com `sispat_test_...`
+    - **Base URL:** `https://des-apex.antaq.gov.br/ords/sfc_dev/sispat/bens`
+    - **Padrão da Chave:** Inicia obrigatoriamente com `sispat_test_...`
 
     > **Avisos Importantes sobre o Sandbox:**
-    > 1. **Sem Valor Regulatório:** Dados neste ambiente não têm validade fiscal ou legal.
-    > 2. **Volatilidade:** A base pode ser resetada periodicamente sem aviso prévio.
+    > 1. **Sem Valor Regulatório:** Dados neste ambiente não possuem validade legal ou regulatória perante a ANTAQ. O envio não cumpre obrigações de prestação de informações patrimoniais.
+    > 2. **Volatilidade:** A base de dados pode ser resetada periodicamente sem aviso prévio. Não utilize como repositório de backup.
     > 3. **Segurança:** Tentar usar uma chave `sispat_test_` em produção (ou vice-versa) resultará em erro `401 Unauthorized`.
 
-    ## Como Autenticar
+    ### Como Autenticar
+
     O envio da chave é obrigatório no cabeçalho HTTP de todas as requisições:
 
     ```http
@@ -52,12 +73,38 @@ info:
     - Ativa no sistema (ACTIVE_IND = 'Y')
     - Vinculada ao CNPJ da empresa (para operações de escrita)
 
+    ---
+
+    ## Lógica de Sincronização (Upsert)
+
+    A API opera com uma lógica inteligente de **Upsert** baseada em uma chave composta única formada por:
+
+    1. **CNPJ da Empresa**
+    2. **Número do Registro Patrimonial**
+
+    ### Comportamento
+
+    | Cenário | Ação | Código HTTP |
+    |---------|------|-------------|
+    | Registro já existe | UPDATE (atualização) | 200 OK |
+    | Registro não existe | INSERT (criação) | 201 Created |
+
+    > **Nota Importante:** O campo `numero_registro_patrimonial` é o identificador mestre. Qualquer alteração neste campo será interpretada pelo sistema como a entrada de um **novo bem**, e não a alteração de um antigo.
+
+    ### Validação de Segurança (CNPJ)
+
+    A Chave de API (`x-api-key`) deve pertencer explicitamente ao CNPJ informado no corpo da requisição. Tentar cadastrar ou alterar um bem de um CNPJ diferente do vinculado à sua chave resultará em erro **403 Forbidden**.
+
+    ---
+
     ## Paginação
 
     O endpoint GET utiliza paginação nativa do Oracle ORDS:
-    - **Parâmetros controlados pelo ORDS**: `offset` (query string)
-    - **Tamanho da página**: configurado no servidor (padrão: 25, máximo: 500)
+    - **Parâmetro:** `offset` (query string) - índice do primeiro registro (base zero)
+    - **Tamanho da página:** configurado no servidor (padrão: 25, máximo: 500)
     - O ORDS gerencia automaticamente os links de navegação
+
+    ---
 
     ## Códigos de Erro
 
@@ -68,9 +115,12 @@ info:
     | `AUTHORIZATION_ERROR` | API Key não autorizada para o CNPJ informado |
     | `INTERNAL_ERROR` | Erro interno do servidor |
 
+    ---
+
     ## Suporte
 
-    - **Site institucional**: [ANTAQ](https://www.gov.br/antaq/pt-br)
+    - **Site institucional:** [ANTAQ](https://www.gov.br/antaq/pt-br)
+    - **E-mail:** inventario@antaq.gov.br
   contact:
     name: Equipe de Suporte SISPAT
     url: 'https://www.gov.br/antaq/pt-br'

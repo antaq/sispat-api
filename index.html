@@ -281,6 +281,147 @@
         .custom-footer a:hover {
             text-decoration: underline;
         }
+        /* Guia de Integração - Seções Colapsáveis */
+        .integration-guide {
+            max-width: 1460px;
+            margin: 0 auto;
+            padding: 20px 40px;
+        }
+        .integration-guide h2 {
+            color: #1351b4;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #1351b4;
+        }
+        .collapsible-section {
+            margin-bottom: 10px;
+            border: 1px solid #d4d4d4;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #fff;
+        }
+        .collapsible-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 15px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            color: #1351b4;
+            transition: background 0.2s;
+        }
+        .collapsible-header:hover {
+            background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+        }
+        .collapsible-header::after {
+            content: '+';
+            font-size: 20px;
+            font-weight: bold;
+            transition: transform 0.3s;
+        }
+        .collapsible-section.active .collapsible-header::after {
+            content: '−';
+        }
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            background: #fff;
+        }
+        .collapsible-section.active .collapsible-content {
+            max-height: 2000px;
+        }
+        .collapsible-body {
+            padding: 20px;
+            color: #3b4151;
+            line-height: 1.6;
+        }
+        .collapsible-body h4 {
+            color: #1351b4;
+            margin: 15px 0 10px 0;
+            font-size: 16px;
+        }
+        .collapsible-body h4:first-child {
+            margin-top: 0;
+        }
+        .collapsible-body pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .collapsible-body code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            color: #d63384;
+        }
+        .collapsible-body pre code {
+            background: transparent;
+            padding: 0;
+            color: inherit;
+        }
+        .collapsible-body ul, .collapsible-body ol {
+            margin: 10px 0;
+            padding-left: 25px;
+        }
+        .collapsible-body li {
+            margin: 5px 0;
+        }
+        .collapsible-body table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        .collapsible-body th, .collapsible-body td {
+            border: 1px solid #dee2e6;
+            padding: 10px 12px;
+            text-align: left;
+        }
+        .collapsible-body th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #1351b4;
+        }
+        .collapsible-body .alert {
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+        .collapsible-body .alert-warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            color: #856404;
+        }
+        .collapsible-body .alert-info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            color: #0c5460;
+        }
+        .collapsible-body .alert-success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            color: #155724;
+        }
+        .method-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #fff;
+            margin-right: 8px;
+        }
+        .method-get { background: #61affe; }
+        .method-put { background: #fca130; }
     </style>
 </head>
 <body>
@@ -289,6 +430,327 @@
         <div>
             <h1>SISPAT - API de Bens Patrimoniais <span class="version-badge">v2.1.0</span></h1>
             <p>Agência Nacional de Transportes Aquaviários - ANTAQ</p>
+        </div>
+    </div>
+
+    <!-- Guia de Integração Rápida -->
+    <div class="integration-guide">
+        <h2>Guia de Integração Rápida</h2>
+
+        <!-- Seção 1: Teste de Conexão -->
+        <div class="collapsible-section">
+            <div class="collapsible-header">Validando a Conexão (Teste Rápido)</div>
+            <div class="collapsible-content">
+                <div class="collapsible-body">
+                    <p>Antes de iniciar a integração, valide o acesso ao ambiente de desenvolvimento:</p>
+
+                    <h4>cURL (Terminal/CMD)</h4>
+<pre><code>curl -X GET "https://des-apex.antaq.gov.br/ords/sfc_dev/sispat/bens/" \
+     -H "x-api-key: sispat_test_SUA_CHAVE_TESTE" \
+     -H "Accept: application/json"</code></pre>
+
+                    <h4>PowerShell (Windows)</h4>
+<pre><code>Invoke-RestMethod -Uri "https://des-apex.antaq.gov.br/ords/sfc_dev/sispat/bens/" `
+    -Headers @{"x-api-key"="sispat_test_SUA_CHAVE_TESTE"; "Accept"="application/json"}</code></pre>
+
+                    <div class="alert alert-info">
+                        <strong>Dica:</strong> Se receber código <code>200 OK</code> com uma lista de itens (mesmo vazia), sua conexão está funcionando corretamente.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção 2: Exemplos GET -->
+        <div class="collapsible-section">
+            <div class="collapsible-header"><span class="method-badge method-get">GET</span> Consultar Bens - Exemplos de Código</div>
+            <div class="collapsible-content">
+                <div class="collapsible-body">
+                    <p>A operação GET retorna todos os bens patrimoniais vinculados à sua API Key.</p>
+
+                    <h4>JavaScript (Fetch API)</h4>
+<pre><code>fetch('https://prd-apex.antaq.gov.br/ords/sfc/sispat/bens/', {
+    method: 'GET',
+    headers: {
+        'x-api-key': 'sispat_live_SUA_CHAVE_AQUI',
+        'Accept': 'application/json'
+    }
+})
+.then(response => response.json())
+.then(data => {
+    console.log('Total de registros:', data.pagination.total_records);
+    console.log('Bens:', data.items);
+})
+.catch(error => console.error('Erro:', error));</code></pre>
+
+                    <h4>Python (requests)</h4>
+<pre><code>import requests
+
+url = "https://prd-apex.antaq.gov.br/ords/sfc/sispat/bens/"
+headers = {
+    "x-api-key": "sispat_live_SUA_CHAVE_AQUI",
+    "Accept": "application/json"
+}
+
+response = requests.get(url, headers=headers)
+
+if response.status_code == 200:
+    data = response.json()
+    print(f"Total de registros: {data['pagination']['total_records']}")
+    for bem in data['items']:
+        print(f"- {bem['numero_registro_patrimonial']}: {bem['nome_item']}")
+else:
+    print(f"Erro {response.status_code}: {response.text}")</code></pre>
+
+                    <h4>C# (.NET HttpClient)</h4>
+<pre><code>using var client = new HttpClient();
+client.DefaultRequestHeaders.Add("x-api-key", "sispat_live_SUA_CHAVE_AQUI");
+client.DefaultRequestHeaders.Add("Accept", "application/json");
+
+var response = await client.GetAsync("https://prd-apex.antaq.gov.br/ords/sfc/sispat/bens/");
+var json = await response.Content.ReadAsStringAsync();
+
+Console.WriteLine(json);</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção 3: Exemplos PUT -->
+        <div class="collapsible-section">
+            <div class="collapsible-header"><span class="method-badge method-put">PUT</span> Sincronizar Bens - Exemplos de Código</div>
+            <div class="collapsible-content">
+                <div class="collapsible-body">
+                    <p>A operação PUT utiliza lógica de <strong>Upsert</strong>: cria se não existir, atualiza se já existir.</p>
+
+                    <div class="alert alert-warning">
+                        <strong>Importante:</strong> A chave única é formada por <code>cnpj</code> + <code>numero_registro_patrimonial</code>. Alterar o número de registro patrimonial criará um novo bem.
+                    </div>
+
+                    <h4>cURL</h4>
+<pre><code>curl -X PUT "https://prd-apex.antaq.gov.br/ords/sfc/sispat/bens/" \
+     -H "x-api-key: sispat_live_SUA_CHAVE_AQUI" \
+     -H "Content-Type: application/json" \
+     -H "Accept: application/json" \
+     -d '{
+       "cnpj": "04.903.587/0001-08",
+       "numero_registro_patrimonial": "PAT-2024-0001",
+       "numero_do_contrato": "CT-2024-001",
+       "nome_item": "Guindaste portuário",
+       "capitulo": "84",
+       "posicao": "26",
+       "subposicao": "20",
+       "especificacao_tecnica": "Guindaste móvel sobre pneus, capacidade 50t",
+       "cor": "Amarelo",
+       "fornecedor": "Liebherr Brasil",
+       "capacidade": "50 toneladas",
+       "unidade_de_medida": "UN",
+       "latitude": "-23.9618",
+       "longitude": "-46.3322",
+       "destinacao": "Operação portuária",
+       "modalidade_de_tombamento": 1,
+       "data_de_tombamento": "2024-01-15",
+       "valor_original_de_compra": "1500000.00",
+       "fonte_de_recurso": 1,
+       "valor_justo_de_mercado": "1400000.00",
+       "valor_residual": "150000.00",
+       "vida_util_anos": "20",
+       "taxa_depreciacao": "5.00",
+       "data_de_avaliacao": "2024-01-15",
+       "conta_contabil": "1.2.3.1.1.01.01",
+       "historico": 1,
+       "situacao": 1,
+       "estado_de_conservacao": 3,
+       "bem_da_uniao": 2,
+       "bem_reversivel": 1,
+       "natureza": 1,
+       "vinculacao_contratual": 2,
+       "tipo_de_bem": 5,
+       "grupo_de_bens": 4,
+       "sigla_uf": "SP"
+     }'</code></pre>
+
+                    <h4>JavaScript (Fetch API)</h4>
+<pre><code>const bem = {
+    cnpj: "04.903.587/0001-08",
+    numero_registro_patrimonial: "PAT-2024-0001",
+    numero_do_contrato: "CT-2024-001",
+    nome_item: "Guindaste portuário",
+    // ... demais campos obrigatórios
+};
+
+fetch('https://prd-apex.antaq.gov.br/ords/sfc/sispat/bens/', {
+    method: 'PUT',
+    headers: {
+        'x-api-key': 'sispat_live_SUA_CHAVE_AQUI',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    },
+    body: JSON.stringify(bem)
+})
+.then(response => {
+    if (response.status === 200) {
+        console.log('Bem ATUALIZADO com sucesso');
+    } else if (response.status === 201) {
+        console.log('Bem CRIADO com sucesso');
+    }
+    return response.json();
+})
+.then(data => console.log(data));</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção 4: Códigos de Resposta -->
+        <div class="collapsible-section">
+            <div class="collapsible-header">Códigos de Resposta HTTP</div>
+            <div class="collapsible-content">
+                <div class="collapsible-body">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Status</th>
+                                <th>Descrição</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>200</code></td>
+                                <td>OK</td>
+                                <td>Requisição bem-sucedida. No PUT, indica que o bem foi <strong>atualizado</strong>.</td>
+                            </tr>
+                            <tr>
+                                <td><code>201</code></td>
+                                <td>Created</td>
+                                <td>Recurso criado com sucesso. No PUT, indica que o bem foi <strong>cadastrado</strong>.</td>
+                            </tr>
+                            <tr>
+                                <td><code>400</code></td>
+                                <td>Bad Request</td>
+                                <td>Erro de validação: CNPJ inválido, campos obrigatórios faltando ou formato incorreto.</td>
+                            </tr>
+                            <tr>
+                                <td><code>401</code></td>
+                                <td>Unauthorized</td>
+                                <td>API Key não fornecida, inválida ou inativa. Verifique suas credenciais.</td>
+                            </tr>
+                            <tr>
+                                <td><code>403</code></td>
+                                <td>Forbidden</td>
+                                <td>API Key não tem permissão para operar com o CNPJ informado.</td>
+                            </tr>
+                            <tr>
+                                <td><code>422</code></td>
+                                <td>Unprocessable Entity</td>
+                                <td>Dados semanticamente inválidos (ex: enum fora do range permitido).</td>
+                            </tr>
+                            <tr>
+                                <td><code>500</code></td>
+                                <td>Internal Server Error</td>
+                                <td>Erro interno não tratado. Contate o suporte.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção 5: Dicionário de Campos -->
+        <div class="collapsible-section">
+            <div class="collapsible-header">Dicionário de Campos Enumerados</div>
+            <div class="collapsible-content">
+                <div class="collapsible-body">
+                    <p>Campos que aceitam apenas valores específicos (enums):</p>
+
+                    <h4>modalidade_de_tombamento</h4>
+                    <table>
+                        <tr><th>Valor</th><th>Descrição</th></tr>
+                        <tr><td>1</td><td>Aquisição</td></tr>
+                        <tr><td>2</td><td>Comodato</td></tr>
+                        <tr><td>3</td><td>Cessão</td></tr>
+                        <tr><td>4</td><td>Permuta</td></tr>
+                        <tr><td>5</td><td>Doação</td></tr>
+                        <tr><td>6</td><td>Fabricação</td></tr>
+                        <tr><td>7</td><td>Incorporação Prévia</td></tr>
+                        <tr><td>8</td><td>Transferência</td></tr>
+                        <tr><td>9</td><td>Encampação</td></tr>
+                    </table>
+
+                    <h4>fonte_de_recurso</h4>
+                    <table>
+                        <tr><th>Valor</th><th>Descrição</th></tr>
+                        <tr><td>1</td><td>Próprio</td></tr>
+                        <tr><td>2</td><td>Tesouro Nacional</td></tr>
+                        <tr><td>3</td><td>Tesouro Estadual</td></tr>
+                        <tr><td>4</td><td>Tesouro Municipal</td></tr>
+                    </table>
+
+                    <h4>historico</h4>
+                    <table>
+                        <tr><th>Valor</th><th>Descrição</th></tr>
+                        <tr><td>1</td><td>Tombado</td></tr>
+                        <tr><td>2</td><td>Não Tombado</td></tr>
+                        <tr><td>3</td><td>Inexistente</td></tr>
+                        <tr><td>4</td><td>Transferência União</td></tr>
+                        <tr><td>5</td><td>Sem Transferência</td></tr>
+                        <tr><td>6</td><td>Com Aceite</td></tr>
+                        <tr><td>7</td><td>Sem Aceite</td></tr>
+                    </table>
+
+                    <h4>situacao</h4>
+                    <table>
+                        <tr><th>Valor</th><th>Descrição</th></tr>
+                        <tr><td>1</td><td>Servível</td></tr>
+                        <tr><td>2</td><td>Ocioso</td></tr>
+                        <tr><td>3</td><td>Antieconômico</td></tr>
+                        <tr><td>4</td><td>Recuperável</td></tr>
+                        <tr><td>5</td><td>Irrecuperável</td></tr>
+                    </table>
+
+                    <h4>estado_de_conservacao</h4>
+                    <table>
+                        <tr><th>Valor</th><th>Descrição</th></tr>
+                        <tr><td>1</td><td>Novo</td></tr>
+                        <tr><td>2</td><td>Excelente</td></tr>
+                        <tr><td>3</td><td>Bom</td></tr>
+                        <tr><td>4</td><td>Regular</td></tr>
+                        <tr><td>5</td><td>Péssimo</td></tr>
+                    </table>
+
+                    <h4>grupo_de_bens</h4>
+                    <table>
+                        <tr><th>Valor</th><th>Descrição</th></tr>
+                        <tr><td>1</td><td>Terrenos</td></tr>
+                        <tr><td>2</td><td>Edifícios</td></tr>
+                        <tr><td>3</td><td>Instalações</td></tr>
+                        <tr><td>4</td><td>Máquinas e Equipamentos</td></tr>
+                        <tr><td>10</td><td>Veículos</td></tr>
+                        <tr><td>15</td><td>Infraestrutura Marítima</td></tr>
+                        <tr><td>17</td><td>Infraestrutura Terrestre</td></tr>
+                    </table>
+
+                    <h4>tipo_de_bem</h4>
+                    <table>
+                        <tr><th>Valor</th><th>Descrição</th></tr>
+                        <tr><td>1</td><td>União (Tipo 1)</td></tr>
+                        <tr><td>2</td><td>União (Tipo 2)</td></tr>
+                        <tr><td>3</td><td>União (Tipo 3)</td></tr>
+                        <tr><td>4</td><td>Terceiros</td></tr>
+                        <tr><td>5</td><td>Próprios (Tipo 1)</td></tr>
+                        <tr><td>6</td><td>Próprios (Tipo 2)</td></tr>
+                        <tr><td>7</td><td>Imobilizado</td></tr>
+                    </table>
+
+                    <h4>Campos binários (1=Sim, 2=Não)</h4>
+                    <ul>
+                        <li><code>bem_da_uniao</code></li>
+                        <li><code>bem_reversivel</code></li>
+                        <li><code>natureza</code> (1=Móvel, 2=Imóvel)</li>
+                        <li><code>vinculacao_contratual</code> (1=Removível, 2=Não Removível)</li>
+                        <li><code>modalidade_exploracao</code> (1=Autoridade Portuária, 2=Arrendatário)</li>
+                        <li><code>depreciacao_especial</code></li>
+                    </ul>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -333,6 +795,14 @@
             });
             window.ui = ui;
         };
+
+        // Controle das seções colapsáveis
+        document.querySelectorAll('.collapsible-header').forEach(header => {
+            header.addEventListener('click', function() {
+                const section = this.parentElement;
+                section.classList.toggle('active');
+            });
+        });
     </script>
 </body>
 </html>

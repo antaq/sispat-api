@@ -1,0 +1,1077 @@
+openapi: 3.0.3
+externalDocs:
+  description: Baixar Guia Oficial de Integração (PDF)
+  url: >-
+    https://des-apex.antaq.gov.br/ords/r/sfc_dev/147/files/static/v41/GUIA_API_SISPAT_LATEX%20(1).pdf
+info:
+  title: SISPAT - API de Bens Patrimoniais
+  version: 2.1.0
+  description: |
+    # SISPAT - API de Bens Patrimoniais
+
+    [**BAIXAR GUIA COMPLETO DE INTEGRAÇÃO (PDF)**](https://des-apex.antaq.gov.br/ords/r/sfc_dev/147/files/static/v41/GUIA_API_SISPAT_LATEX%20(1).pdf)
+
+    ## Introdução
+
+    A **SISPAT - API de Bens Patrimoniais** permite a consulta e a manutenção de bens patrimoniais cadastrados no Sistema de Bens Patrimoniais (SISPAT) da ANTAQ.
+
+    Esta API foi projetada para integração de sistemas de gestão, portais e aplicações internas ou externas que necessitam acessar informações de bens, tais como:
+    - Identificação do bem e dados de tombamento;
+    - Localização geográfica e administrativa;
+    - Situação, natureza, grupo de bens;
+    - Valores contábeis, valor justo e depreciação.
+
+    ---
+
+    ## Autenticação e Ambientes
+
+    A API utiliza validação estrita de chaves para separar os ambientes. O acesso é determinado pelo **prefixo** da sua chave (`x-api-key`).
+
+    ### Produção (Oficial)
+    - **Base URL**: `https://prd-apex.antaq.gov.br/ords/sfc/sispat/bens`
+    - **Padrão da Chave**: Inicia obrigatoriamente com `sispat_live...`
+    - **Uso**: Dados oficiais e definitivos com valor regulatório.
+
+    ### Desenvolvimento (Sandbox)
+    - **Base URL**: `https://des-apex.antaq.gov.br/ords/sfc_dev/sispat/bens`
+    - **Padrão da Chave**: Inicia obrigatoriamente com `sispat_test_...`
+
+    > **Avisos Importantes sobre o Sandbox:**
+    > 1. **Sem Valor Regulatório:** Dados neste ambiente não têm validade fiscal ou legal.
+    > 2. **Volatilidade:** A base pode ser resetada periodicamente sem aviso prévio.
+    > 3. **Segurança:** Tentar usar uma chave `sispat_test_` em produção (ou vice-versa) resultará em erro `401 Unauthorized`.
+
+    ## Como Autenticar
+    O envio da chave é obrigatório no cabeçalho HTTP de todas as requisições:
+
+    ```http
+    x-api-key: sispat_live_SUA_CHAVE_AQUI
+    ```
+
+    A API Key deve estar:
+    - Ativa no sistema (ACTIVE_IND = 'Y')
+    - Vinculada ao CNPJ da empresa (para operações de escrita)
+
+    ## Paginação
+
+    O endpoint GET utiliza paginação nativa do Oracle ORDS:
+    - **Parâmetros controlados pelo ORDS**: `offset` (query string)
+    - **Tamanho da página**: configurado no servidor (padrão: 25, máximo: 500)
+    - O ORDS gerencia automaticamente os links de navegação
+
+    ## Códigos de Erro
+
+    | Código | Descrição |
+    |--------|-----------|
+    | `VALIDATION_ERROR` | Campos obrigatórios ausentes ou inválidos |
+    | `AUTHENTICATION_ERROR` | API Key inválida, inativa ou não fornecida |
+    | `AUTHORIZATION_ERROR` | API Key não autorizada para o CNPJ informado |
+    | `INTERNAL_ERROR` | Erro interno do servidor |
+
+    ## Suporte
+
+    - **Site institucional**: [ANTAQ](https://www.gov.br/antaq/pt-br)
+  contact:
+    name: Equipe de Suporte SISPAT
+    url: 'https://www.gov.br/antaq/pt-br'
+    email: inventario@antaq.gov.br
+  license:
+    name: Licença Pública
+    url: https://www.gov.br/governodigital/pt-br/dados-abertos
+servers:
+  - url: 'https://prd-apex.antaq.gov.br/ords/sfc/sispat/bens'
+    description: Produção (Oficial)
+  - url: 'https://des-apex.antaq.gov.br/ords/sfc_dev/sispat/bens'
+    description: Desenvolvimento (Sandbox)
+tags:
+  - name: Bens Patrimoniais
+    description: Operações de consulta, criação e atualização de bens patrimoniais.
+security:
+  - ApiKeyAuth: []
+paths:
+  /:
+    get:
+      tags:
+        - Bens Patrimoniais
+      summary: Listar bens patrimoniais
+      description: |
+        Recupera a lista de bens patrimoniais cadastrados no SISPAT vinculados à empresa associada à API Key.
+
+        A paginação é gerenciada automaticamente pelo Oracle ORDS. O tamanho da página é configurado no servidor (padrão: 25, máximo: 500).
+
+        Para navegar entre páginas, utilize o parâmetro `offset` na query string.
+
+        A API identifica automaticamente o ambiente (Teste ou Produção) baseada no prefixo da chave enviada (`sispat_test_` ou `sispat_live`).
+      parameters:
+        - name: offset
+          in: query
+          description: |
+            Índice do primeiro registro a retornar (baseado em zero).
+            Gerenciado automaticamente pelo ORDS.
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          example: 0
+      responses:
+        '200':
+          description: Lista de bens patrimoniais retornada com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListaBensResponse'
+              examples:
+                exemploSucesso:
+                  summary: Exemplo de retorno com paginação
+                  value:
+                    pagination:
+                      offset: 0
+                      fetch_size: 25
+                      total_records: 150
+                    items:
+                      - id_cadastro_de_bens: 26
+                        num_cnpj: "04903587000108"
+                        numero_registro_patrimonial: PAT-2024-BSB-099
+                        numero_do_contrato: 058/2023
+                        nome_item: Tanque de armazenamento
+                        capitulo: 73
+                        posicao: 7309
+                        subposicao: 730900
+                        valor_original_de_compra: "451871.57"
+                        valor_justo_de_mercado: "384751.00"
+                        sigla_uf: "DF"
+                        situacao: "ATIVO"
+                    returned_count: 25
+                    has_more: true
+        '401':
+          description: Não autorizado. Chave de API ausente ou inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroPadrao'
+              examples:
+                apiKeyAusente:
+                  summary: API Key não fornecida
+                  value:
+                    status: 401
+                    error: "Unauthorized"
+                    code: "AUTHENTICATION_ERROR"
+                    message: "API Key não fornecida. Inclua o header x-api-key na requisição."
+                apiKeyInvalida:
+                  summary: API Key inválida
+                  value:
+                    status: 401
+                    error: "Unauthorized"
+                    code: "AUTHENTICATION_ERROR"
+                    message: "API Key inválida ou inativa"
+        '500':
+          description: Erro interno no servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroPadrao'
+              examples:
+                erroInterno:
+                  summary: Erro interno do servidor
+                  value:
+                    status: 500
+                    error: "Internal Server Error"
+                    code: "INTERNAL_ERROR"
+                    message: "Erro interno do servidor. Contate o administrador."
+    put:
+      tags:
+        - Bens Patrimoniais
+      summary: Sincronizar bem patrimonial (Upsert)
+      description: |
+        Cria um novo bem patrimonial ou atualiza um bem existente no SISPAT.
+
+        **Comportamento (Upsert):**
+        - Se já existir um registro com o mesmo `cnpj` + `numero_registro_patrimonial`, o registro será **atualizado** (HTTP 200).
+        - Caso contrário, um novo registro será **criado** (HTTP 201).
+
+        **Validações:**
+        1. A API Key deve estar ativa e vinculada ao CNPJ informado
+        2. Todos os campos obrigatórios devem ser preenchidos
+        3. Formatos de data devem seguir ISO 8601 (YYYY-MM-DD)
+
+        **Campos Obrigatórios:**
+        - cnpj, numero_registro_patrimonial, numero_do_contrato
+        - capitulo, posicao, subposicao (NCM)
+        - nome_item, especificacao_tecnica, cor, fornecedor
+        - capacidade, unidade_de_medida, latitude, longitude
+        - destinacao, modalidade_de_tombamento, data_de_tombamento
+        - valor_original_de_compra, fonte_de_recurso
+        - valor_justo_de_mercado, valor_residual, vida_util_anos
+        - taxa_depreciacao, data_de_avaliacao, conta_contabil
+        - historico, situacao, estado_de_conservacao
+        - bem_da_uniao, bem_reversivel, natureza
+        - vinculacao_contratual, tipo_de_bem, grupo_de_bens, sigla_uf
+
+        **Nota:** Certifique-se de usar a chave correspondente ao ambiente desejado.
+        Dados enviados para `sispat_test_` não afetam a base oficial.
+      requestBody:
+        required: true
+        description: Dados do bem patrimonial a ser criado ou atualizado.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BemPatrimonialInput'
+            examples:
+              exemploCompleto:
+                summary: Exemplo completo para criação de bem
+                value:
+                  cnpj: "04.903.587/0001-08"
+                  numero_registro_patrimonial: "PAT-2024-0001"
+                  numero_do_contrato: "CT-2024-001"
+                  cod_trigrama: "GND"
+                  capitulo: "84"
+                  posicao: "26"
+                  subposicao: "20"
+                  nome_item: "Guindaste portuário"
+                  especificacao_tecnica: "Guindaste móvel sobre pneus, capacidade 50t"
+                  cor: "Amarelo"
+                  fornecedor: "Liebherr Brasil"
+                  capacidade: "50 toneladas"
+                  unidade_de_medida: "UN"
+                  latitude: "-23.9618"
+                  longitude: "-46.3322"
+                  destinacao: "Operação portuária"
+                  modalidade_de_tombamento: 1
+                  data_de_tombamento: "2024-01-15"
+                  valor_original_de_compra: "1500000.00"
+                  fonte_de_recurso: 1
+                  valor_justo_de_mercado: "1400000.00"
+                  valor_residual: "150000.00"
+                  vida_util_anos: "20"
+                  taxa_depreciacao: "5.00"
+                  data_de_avaliacao: "2024-01-15"
+                  conta_contabil: "1.2.3.1.1.01.01"
+                  historico: 1
+                  situacao: 1
+                  estado_de_conservacao: 3
+                  bem_da_uniao: 2
+                  bem_reversivel: 1
+                  natureza: 1
+                  vinculacao_contratual: 2
+                  tipo_de_bem: 5
+                  grupo_de_bens: 4
+                  sigla_uf: "SP"
+              exemploTeste:
+                summary: Exemplo para Ambiente de Teste
+                value:
+                  cnpj: "12.345.123/4123-12"
+                  numero_registro_patrimonial: "TESTE-DEV-001"
+                  numero_do_contrato: "CTR-TESTE/2025"
+                  nome_item: "Empilhadeira de Teste Sandbox"
+                  cod_trigrama: "TSB"
+                  capitulo: "84"
+                  posicao: "8427"
+                  subposicao: "842710"
+                  cor: "Amarelo"
+                  fornecedor: "Oracle Apex Solutions"
+                  modalidade_de_tombamento: 1
+                  latitude: "-23.961927"
+                  longitude: "-46.295431"
+                  destinacao: "Pátio de Testes"
+                  data_de_tombamento: "2025-01-01"
+                  capacidade: "5 toneladas"
+                  unidade_de_medida: "UN"
+                  especificacao_tecnica: "Empilhadeira para testes de carga via API."
+                  valor_original_de_compra: "150000.00"
+                  fonte_de_recurso: 1
+                  vida_util_anos: "10"
+                  taxa_depreciacao: "10.00"
+                  historico: 1
+                  situacao: 1
+                  estado_de_conservacao: 3
+                  bem_da_uniao: 2
+                  bem_reversivel: 1
+                  natureza: 1
+                  vinculacao_contratual: 2
+                  tipo_de_bem: 5
+                  grupo_de_bens: 4
+                  conta_contabil: "1.2.3.0.0"
+                  data_de_avaliacao: "2025-01-01"
+                  valor_justo_de_mercado: "140000.00"
+                  valor_residual: "10000.00"
+                  sigla_uf: "DF"
+      responses:
+        '200':
+          description: Bem atualizado com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BemPatrimonialResponse'
+              examples:
+                exemploAtualizacao:
+                  summary: Bem atualizado
+                  value:
+                    message: "Operação realizada com sucesso."
+                    action: "Atualizado"
+                    data:
+                      cnpj: "04903587000108"
+                      numero_registro_patrimonial: "PAT-2024-0001"
+                      nome_item: "Guindaste portuário"
+        '201':
+          description: Bem criado com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BemPatrimonialResponse'
+              examples:
+                exemploCriacao:
+                  summary: Bem criado
+                  value:
+                    message: "Operação realizada com sucesso."
+                    action: "Criado"
+                    data:
+                      cnpj: "04903587000108"
+                      numero_registro_patrimonial: "PAT-2024-0001"
+                      nome_item: "Guindaste portuário"
+        '400':
+          description: Campos obrigatórios ausentes ou inválidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroPadrao'
+              examples:
+                camposAusentes:
+                  summary: Campos obrigatórios ausentes
+                  value:
+                    status: 400
+                    error: "Bad Request"
+                    code: "VALIDATION_ERROR"
+                    message: "Campos obrigatórios não informados"
+                    missing_fields:
+                      - "nome_item"
+                      - "valor_original_de_compra"
+                    missing_count: 2
+        '401':
+          description: Não autorizado. Chave de API ausente ou inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroPadrao'
+              examples:
+                apiKeyInvalida:
+                  summary: API Key inválida
+                  value:
+                    status: 401
+                    error: "Unauthorized"
+                    code: "AUTHENTICATION_ERROR"
+                    message: "API Key inválida ou inativa"
+        '403':
+          description: API Key não autorizada para o CNPJ informado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroPadrao'
+              examples:
+                cnpjNaoAutorizado:
+                  summary: CNPJ não autorizado
+                  value:
+                    status: 403
+                    error: "Forbidden"
+                    code: "AUTHORIZATION_ERROR"
+                    message: "API Key não autorizada para o CNPJ informado"
+        '422':
+          description: Dados enviados são semanticamente inválidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroPadrao'
+              examples:
+                dadosInvalidos:
+                  summary: Dados inválidos
+                  value:
+                    status: 422
+                    error: "Unprocessable Entity"
+                    code: "VALIDATION_ERROR"
+                    message: "Dados inválidos para processamento"
+        '500':
+          description: Erro interno no servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroPadrao'
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: |
+        **Chave de API.**
+
+        * **Produção:** Use chaves iniciando com `sispat_live...`
+        * **Teste:** Use chaves iniciando com `sispat_test_...`
+
+        A API Key deve estar:
+        - Ativa no sistema (ACTIVE_IND = 'Y')
+        - Vinculada ao CNPJ da empresa (para operações de escrita)
+
+  schemas:
+    ListaBensResponse:
+      type: object
+      description: Resposta da listagem de bens patrimoniais com paginação.
+      properties:
+        pagination:
+          type: object
+          description: Metadados de paginação.
+          properties:
+            offset:
+              type: integer
+              description: Índice do primeiro registro retornado (baseado em zero).
+              example: 0
+            fetch_size:
+              type: integer
+              description: Quantidade máxima de registros por página.
+              example: 25
+            total_records:
+              type: integer
+              description: Total de registros disponíveis.
+              example: 150
+        items:
+          type: array
+          description: Lista de bens patrimoniais.
+          items:
+            $ref: '#/components/schemas/BemPatrimonial'
+        returned_count:
+          type: integer
+          description: Quantidade de registros retornados nesta página.
+          example: 25
+        has_more:
+          type: boolean
+          description: Indica se há mais registros após esta página.
+          example: true
+
+    BemPatrimonial:
+      type: object
+      description: Dados de um bem patrimonial retornado pela API.
+      properties:
+        id_cadastro_de_bens:
+          type: integer
+          description: Identificador único do cadastro do bem (apenas leitura).
+          example: 12345
+        num_cnpj:
+          type: string
+          description: CNPJ da empresa (14 dígitos, sem formatação).
+          example: "04903587000108"
+        numero_registro_patrimonial:
+          type: string
+          description: Número de registro patrimonial do bem.
+          example: "PAT-2024-0001"
+        nome_item:
+          type: string
+          description: Nome/descrição do bem.
+          example: "Guindaste portuário"
+        vinculacao_contratual:
+          type: string
+          description: Tipo de vinculação contratual.
+          example: "ARRENDAMENTO"
+        numero_do_contrato:
+          type: string
+          description: Número do contrato vinculado.
+          example: "CT-2024-001"
+        cod_trigrama:
+          type: string
+          description: Código trigrama do bem.
+          example: "GND"
+        capacidade:
+          type: string
+          description: Capacidade do bem.
+          example: "50 toneladas"
+        capitulo:
+          type: integer
+          description: Capítulo NCM.
+          example: 84
+        posicao:
+          type: integer
+          description: Posição NCM.
+          example: 26
+        subposicao:
+          type: integer
+          description: Subposição NCM.
+          example: 20
+        cor:
+          type: string
+          description: Cor do bem.
+          example: "Amarelo"
+        fornecedor:
+          type: string
+          description: Nome do fornecedor.
+          example: "Liebherr Brasil"
+        modalidade_de_tombamento:
+          type: integer
+          description: |
+            Modalidade de tombamento do bem.
+            - 1: Aquisição
+            - 2: Comodato
+            - 3: Cessão
+            - 4: Permuta
+            - 5: Doação
+            - 6: Fabricação
+            - 7: Incorporação Prévia
+            - 8: Transferência
+            - 9: Encampação
+          enum: [1, 2, 3, 4, 5, 6, 7, 8, 9]
+          example: 1
+        latitude:
+          type: number
+          format: double
+          description: Latitude WGS84.
+          example: -23.9618
+        longitude:
+          type: number
+          format: double
+          description: Longitude WGS84.
+          example: -46.3322
+        sigla_uf:
+          type: string
+          description: Sigla da UF (2 caracteres).
+          example: "SP"
+        destinacao:
+          type: string
+          description: Local interno de destinação.
+          example: "Operação portuária"
+        data_de_tombamento:
+          type: string
+          format: date
+          description: Data de registro patrimonial (YYYY-MM-DD).
+          example: "2024-01-15"
+        unidade_de_medida:
+          type: string
+          description: Unidade física de medida.
+          example: "UN"
+        especificacao_tecnica:
+          type: string
+          description: Descrição técnica detalhada.
+          example: "Guindaste móvel sobre pneus, capacidade 50t"
+        valor_original_de_compra:
+          type: string
+          description: Valor de aquisição em moeda corrente.
+          example: "1500000.00"
+        fonte_de_recurso:
+          type: integer
+          description: |
+            Fonte do recurso utilizado na aquisição.
+            - 1: Próprio
+            - 2: Tesouro Nacional
+            - 3: Tesouro Estadual
+            - 4: Tesouro Municipal
+          enum: [1, 2, 3, 4]
+          example: 1
+        historico:
+          type: integer
+          description: |
+            Status histórico do bem.
+            - 1: Tombado
+            - 2: Não Tombado
+            - 3: Inexistente
+            - 4: Transferência União
+            - 5: Sem Transferência
+            - 6: Com Aceite
+            - 7: Sem Aceite
+          enum: [1, 2, 3, 4, 5, 6, 7]
+          example: 1
+        situacao:
+          type: integer
+          description: |
+            Situação atual do bem.
+            - 1: Servível
+            - 2: Ocioso
+            - 3: Antieconômico
+            - 4: Recuperável
+            - 5: Irrecuperável
+          enum: [1, 2, 3, 4, 5]
+          example: 1
+        estado_de_conservacao:
+          type: integer
+          description: |
+            Estado de conservação do bem.
+            - 1: Novo
+            - 2: Excelente
+            - 3: Bom
+            - 4: Regular
+            - 5: Péssimo
+          enum: [1, 2, 3, 4, 5]
+          example: 3
+        bem_da_uniao:
+          type: integer
+          description: |
+            Indica se é bem da União.
+            - 1: Sim
+            - 2: Não
+          enum: [1, 2]
+          example: 2
+        bem_reversivel:
+          type: integer
+          description: |
+            Indica se é bem reversível.
+            - 1: Sim
+            - 2: Não
+          enum: [1, 2]
+          example: 1
+        natureza:
+          type: integer
+          description: |
+            Natureza do bem.
+            - 1: Móvel
+            - 2: Imóvel
+          enum: [1, 2]
+          example: 1
+        tempo_de_utilizacao:
+          type: integer
+          description: Tempo acumulado de uso em anos.
+          example: 5
+        modalidade_exploracao:
+          type: integer
+          description: |
+            Modalidade de exploração.
+            - 1: Autoridade Portuária
+            - 2: Arrendatário
+          enum: [1, 2]
+          example: 2
+        tipo_de_bem:
+          type: integer
+          description: |
+            Tipo do bem.
+            - 1: União (Tipo 1)
+            - 2: União (Tipo 2)
+            - 3: União (Tipo 3)
+            - 4: Terceiros
+            - 5: Próprios (Tipo 1)
+            - 6: Próprios (Tipo 2)
+            - 7: Imobilizado
+          enum: [1, 2, 3, 4, 5, 6, 7]
+          example: 5
+        grupo_de_bens:
+          type: integer
+          description: |
+            Grupo de bens patrimoniais.
+            - 1: Terrenos
+            - 2: Edifícios
+            - 3: Instalações
+            - 4: Máquinas e Equipamentos
+            - 10: Veículos
+            - 15: Infraestrutura Marítima
+            - 17: Infraestrutura Terrestre
+          enum: [1, 2, 3, 4, 10, 15, 17]
+          example: 4
+        vinculacao_contratual:
+          type: integer
+          description: |
+            Tipo de vinculação contratual.
+            - 1: Removível
+            - 2: Não Removível
+          enum: [1, 2]
+          example: 2
+        data_de_avaliacao:
+          type: string
+          format: date
+          description: Data da última avaliação (YYYY-MM-DD).
+          example: "2024-01-15"
+        valor_justo_de_mercado:
+          type: string
+          description: Valor justo de mercado.
+          example: "1400000.00"
+        conta_contabil:
+          type: string
+          description: Conta contábil.
+          example: "1.2.3.1.1.01.01"
+        valor_residual:
+          type: string
+          description: Valor residual.
+          example: "150000.00"
+        vida_util_anos:
+          type: integer
+          description: Vida útil em anos.
+          example: 20
+        taxa_depreciacao:
+          type: number
+          format: double
+          description: Percentual anual de depreciação.
+          example: 5.00
+        conta_contabil_depreciacao:
+          type: string
+          description: Conta contábil da despesa de depreciação.
+          example: "2.1.1.01.01"
+        depreciacao_anual:
+          type: number
+          format: double
+          readOnly: true
+          description: |
+            Valor monetário depreciado anualmente. **Calculado automaticamente** pelo sistema
+            usando a fórmula: ((valor_original - valor_residual) / vida_util_anos) * (taxa_depreciacao / 100).
+            Este campo é somente leitura e não pode ser enviado no corpo da requisição PUT.
+          example: 75000.00
+        depreciacao_especial:
+          type: integer
+          description: |
+            Indica se possui depreciação especial.
+            - 1: Sim
+            - 2: Não
+          enum: [1, 2]
+          example: 2
+        desc_deprec_especial:
+          type: string
+          description: Justificativa para depreciação especial.
+          example: "Bem com vida útil reduzida devido ao uso intensivo."
+
+    BemPatrimonialInput:
+      type: object
+      description: Dados para criação ou atualização de um bem patrimonial.
+      required:
+        - cnpj
+        - numero_registro_patrimonial
+        - numero_do_contrato
+        - capitulo
+        - posicao
+        - subposicao
+        - nome_item
+        - especificacao_tecnica
+        - cor
+        - fornecedor
+        - capacidade
+        - unidade_de_medida
+        - latitude
+        - longitude
+        - destinacao
+        - modalidade_de_tombamento
+        - data_de_tombamento
+        - valor_original_de_compra
+        - fonte_de_recurso
+        - valor_justo_de_mercado
+        - valor_residual
+        - vida_util_anos
+        - taxa_depreciacao
+        - data_de_avaliacao
+        - conta_contabil
+        - historico
+        - situacao
+        - estado_de_conservacao
+        - bem_da_uniao
+        - bem_reversivel
+        - natureza
+        - vinculacao_contratual
+        - tipo_de_bem
+        - grupo_de_bens
+        - sigla_uf
+      properties:
+        cnpj:
+          type: string
+          description: CNPJ da empresa (aceita formatado ou apenas números).
+          example: "04.903.587/0001-08"
+        numero_registro_patrimonial:
+          type: string
+          maxLength: 50
+          description: Número de registro patrimonial do bem.
+          example: "PAT-2024-0001"
+        numero_do_contrato:
+          type: string
+          maxLength: 255
+          description: Número do contrato vinculado.
+          example: "CT-2024-001"
+        cod_trigrama:
+          type: string
+          description: Código trigrama do bem (opcional).
+          example: "GND"
+        capitulo:
+          type: string
+          description: Capítulo NCM.
+          example: "84"
+        posicao:
+          type: string
+          description: Posição NCM.
+          example: "26"
+        subposicao:
+          type: string
+          description: Subposição NCM.
+          example: "20"
+        nome_item:
+          type: string
+          maxLength: 4000
+          description: Nome/descrição do bem.
+          example: "Guindaste portuário"
+        especificacao_tecnica:
+          type: string
+          description: Especificação técnica detalhada do bem.
+          example: "Guindaste móvel sobre pneus, capacidade 50t"
+        cor:
+          type: string
+          description: Cor do bem.
+          example: "Amarelo"
+        fornecedor:
+          type: string
+          description: Nome do fornecedor.
+          example: "Liebherr Brasil"
+        capacidade:
+          type: string
+          description: Capacidade do bem.
+          example: "50 toneladas"
+        unidade_de_medida:
+          type: string
+          description: Unidade de medida.
+          example: "UN"
+        latitude:
+          type: string
+          description: Latitude da localização.
+          example: "-23.9618"
+        longitude:
+          type: string
+          description: Longitude da localização.
+          example: "-46.3322"
+        destinacao:
+          type: string
+          description: Destinação do bem.
+          example: "Operação portuária"
+        modalidade_de_tombamento:
+          type: integer
+          description: |
+            Modalidade de tombamento do bem.
+            - 1: Aquisição
+            - 2: Comodato
+            - 3: Cessão
+            - 4: Permuta
+            - 5: Doação
+            - 6: Fabricação
+            - 7: Incorporação Prévia
+            - 8: Transferência
+            - 9: Encampação
+          enum: [1, 2, 3, 4, 5, 6, 7, 8, 9]
+          example: 1
+        data_de_tombamento:
+          type: string
+          format: date
+          description: Data de tombamento (YYYY-MM-DD).
+          example: "2024-01-15"
+        valor_original_de_compra:
+          type: string
+          description: Valor original de compra em moeda corrente.
+          example: "1500000.00"
+        fonte_de_recurso:
+          type: integer
+          description: |
+            Fonte do recurso utilizado na aquisição.
+            - 1: Próprio
+            - 2: Tesouro Nacional
+            - 3: Tesouro Estadual
+            - 4: Tesouro Municipal
+          enum: [1, 2, 3, 4]
+          example: 1
+        valor_justo_de_mercado:
+          type: string
+          description: Valor justo de mercado.
+          example: "1400000.00"
+        valor_residual:
+          type: string
+          description: Valor residual.
+          example: "150000.00"
+        vida_util_anos:
+          type: string
+          description: Vida útil em anos.
+          example: "20"
+        taxa_depreciacao:
+          type: string
+          description: Taxa de depreciação anual (%).
+          example: "5.00"
+        data_de_avaliacao:
+          type: string
+          format: date
+          description: Data da avaliação (YYYY-MM-DD).
+          example: "2024-01-15"
+        conta_contabil:
+          type: string
+          description: Conta contábil.
+          example: "1.2.3.1.1.01.01"
+        historico:
+          type: integer
+          description: |
+            Status histórico do bem.
+            - 1: Tombado
+            - 2: Não Tombado
+            - 3: Inexistente
+            - 4: Transferência União
+            - 5: Sem Transferência
+            - 6: Com Aceite
+            - 7: Sem Aceite
+          enum: [1, 2, 3, 4, 5, 6, 7]
+          example: 1
+        situacao:
+          type: integer
+          description: |
+            Situação atual do bem.
+            - 1: Servível
+            - 2: Ocioso
+            - 3: Antieconômico
+            - 4: Recuperável
+            - 5: Irrecuperável
+          enum: [1, 2, 3, 4, 5]
+          example: 1
+        estado_de_conservacao:
+          type: integer
+          description: |
+            Estado de conservação do bem.
+            - 1: Novo
+            - 2: Excelente
+            - 3: Bom
+            - 4: Regular
+            - 5: Péssimo
+          enum: [1, 2, 3, 4, 5]
+          example: 3
+        bem_da_uniao:
+          type: integer
+          description: |
+            Indica se é bem da União.
+            - 1: Sim
+            - 2: Não
+          enum: [1, 2]
+          example: 2
+        bem_reversivel:
+          type: integer
+          description: |
+            Indica se é bem reversível.
+            - 1: Sim
+            - 2: Não
+          enum: [1, 2]
+          example: 1
+        natureza:
+          type: integer
+          description: |
+            Natureza do bem.
+            - 1: Móvel
+            - 2: Imóvel
+          enum: [1, 2]
+          example: 1
+        vinculacao_contratual:
+          type: integer
+          description: |
+            Tipo de vinculação contratual.
+            - 1: Removível
+            - 2: Não Removível
+          enum: [1, 2]
+          example: 2
+        tipo_de_bem:
+          type: integer
+          description: |
+            Tipo do bem.
+            - 1: União (Tipo 1)
+            - 2: União (Tipo 2)
+            - 3: União (Tipo 3)
+            - 4: Terceiros
+            - 5: Próprios (Tipo 1)
+            - 6: Próprios (Tipo 2)
+            - 7: Imobilizado
+          enum: [1, 2, 3, 4, 5, 6, 7]
+          example: 5
+        grupo_de_bens:
+          type: integer
+          description: |
+            Grupo de bens patrimoniais.
+            - 1: Terrenos
+            - 2: Edifícios
+            - 3: Instalações
+            - 4: Máquinas e Equipamentos
+            - 10: Veículos
+            - 15: Infraestrutura Marítima
+            - 17: Infraestrutura Terrestre
+          enum: [1, 2, 3, 4, 10, 15, 17]
+          example: 4
+        sigla_uf:
+          type: string
+          description: Sigla da UF (2 caracteres).
+          example: "SP"
+        tempo_de_utilizacao:
+          type: integer
+          description: Tempo acumulado de uso em anos (opcional).
+          example: 5
+        modalidade_exploracao:
+          type: integer
+          description: |
+            Modalidade de exploração (opcional).
+            - 1: Autoridade Portuária
+            - 2: Arrendatário
+          enum: [1, 2]
+          example: 2
+        conta_contabil_depreciacao:
+          type: string
+          maxLength: 50
+          description: Conta contábil da despesa de depreciação (opcional).
+          example: "2.1.1.01.01"
+        # NOTA: O campo depreciacao_anual é CALCULADO automaticamente pelo sistema
+        # usando a fórmula: ((valor_original - valor_residual) / vida_util_anos) * (taxa_depreciacao / 100)
+        # Por isso não é aceito como entrada, mas é retornado nas respostas GET e PUT.
+        depreciacao_especial:
+          type: integer
+          description: |
+            Indica se possui depreciação especial (opcional).
+            - 1: Sim
+            - 2: Não
+          enum: [1, 2]
+          example: 2
+        desc_deprec_especial:
+          type: string
+          maxLength: 4000
+          description: Justificativa para depreciação especial (opcional, obrigatório se depreciacao_especial = 1).
+          example: "Bem com vida útil reduzida devido ao uso intensivo em ambiente corrosivo."
+
+    BemPatrimonialResponse:
+      type: object
+      description: Resposta de sucesso na criação ou atualização de bem.
+      properties:
+        message:
+          type: string
+          description: Mensagem de sucesso.
+          example: "Operação realizada com sucesso."
+        action:
+          type: string
+          description: Ação realizada (Criado ou Atualizado).
+          enum:
+            - Criado
+            - Atualizado
+          example: "Criado"
+        data:
+          $ref: '#/components/schemas/BemPatrimonial'
+
+    ErroPadrao:
+      type: object
+      description: Estrutura padrão para retorno de erros da API.
+      properties:
+        status:
+          type: integer
+          description: Código HTTP do erro.
+          example: 400
+        error:
+          type: string
+          description: Descrição curta do erro HTTP.
+          example: "Bad Request"
+        code:
+          type: string
+          description: Código de erro da aplicação.
+          enum:
+            - VALIDATION_ERROR
+            - AUTHENTICATION_ERROR
+            - AUTHORIZATION_ERROR
+            - INTERNAL_ERROR
+          example: "VALIDATION_ERROR"
+        message:
+          type: string
+          description: Mensagem detalhada do erro.
+          example: "Campos obrigatórios não informados"
+        missing_fields:
+          type: array
+          description: Lista de campos obrigatórios ausentes (quando aplicável).
+          items:
+            type: string
+          example:
+            - "nome_item"
+            - "valor_original_de_compra"
+        missing_count:
+          type: integer
+          description: Quantidade de campos ausentes (quando aplicável).
+          example: 2
+        field:
+          type: string
+          description: Campo específico relacionado ao erro (quando aplicável).
+          example: "cnpj"

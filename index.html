@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SISPAT - API de Bens Patrimoniais</title>
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css">
+    <link rel="icon" type="image/png" href="https://www.gov.br/antaq/pt-br/@@site-logo/logo-antaq.svg">
+    <style>
+        html {
+            box-sizing: border-box;
+            overflow-y: scroll;
+        }
+        *,
+        *:before,
+        *:after {
+            box-sizing: inherit;
+        }
+        body {
+            margin: 0;
+            background: #fafafa;
+        }
+        /* Customização do header */
+        .swagger-ui .topbar {
+            background-color: #1351b4;
+            padding: 10px 0;
+        }
+        .swagger-ui .topbar .download-url-wrapper .select-label {
+            color: #fff;
+        }
+        .swagger-ui .topbar .download-url-wrapper input[type=text] {
+            border: 2px solid #fff;
+        }
+        /* Header customizado ANTAQ */
+        .custom-header {
+            background: linear-gradient(135deg, #1351b4 0%, #071d41 100%);
+            color: white;
+            padding: 20px 40px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .custom-header img {
+            height: 60px;
+        }
+        .custom-header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        .custom-header p {
+            margin: 5px 0 0 0;
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        /* Ajuste do info block */
+        .swagger-ui .info {
+            margin: 30px 0;
+        }
+        .swagger-ui .info .title {
+            color: #1351b4;
+        }
+        /* Badge de versão */
+        .version-badge {
+            background: #168821;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        /* Footer */
+        .custom-footer {
+            background: #071d41;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
+        }
+        .custom-footer a {
+            color: #a8c8ff;
+            text-decoration: none;
+        }
+        .custom-footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="custom-header">
+        <img src="https://www.gov.br/antaq/pt-br/@@site-logo/logo-antaq.svg" alt="ANTAQ" onerror="this.style.display='none'">
+        <div>
+            <h1>SISPAT - API de Bens Patrimoniais <span class="version-badge">v2.1.0</span></h1>
+            <p>Agência Nacional de Transportes Aquaviários - ANTAQ</p>
+        </div>
+    </div>
+
+    <div id="swagger-ui"></div>
+
+    <div class="custom-footer">
+        <p>
+            <strong>ANTAQ</strong> - Agência Nacional de Transportes Aquaviários<br>
+            <a href="https://www.gov.br/antaq/pt-br" target="_blank">www.gov.br/antaq</a> |
+            <a href="mailto:inventario@antaq.gov.br">inventario@antaq.gov.br</a>
+        </p>
+        <p style="opacity: 0.7; font-size: 12px; margin-top: 10px;">
+            Documentação gerada com Swagger UI
+        </p>
+    </div>
+
+    <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+    <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
+    <script>
+        window.onload = function() {
+            const ui = SwaggerUIBundle({
+                url: "openapi.yaml",
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                ],
+                plugins: [
+                    SwaggerUIBundle.plugins.DownloadUrl
+                ],
+                layout: "StandaloneLayout",
+                defaultModelsExpandDepth: 1,
+                defaultModelExpandDepth: 2,
+                docExpansion: "list",
+                filter: true,
+                showExtensions: true,
+                showCommonExtensions: true,
+                tryItOutEnabled: true,
+                supportedSubmitMethods: ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'],
+                validatorUrl: null
+            });
+            window.ui = ui;
+        };
+    </script>
+</body>
+</html>

@@ -466,10 +466,6 @@ components:
           type: string
           description: Nome/descrição do bem.
           example: "Guindaste portuário"
-        vinculacao_contratual:
-          type: string
-          description: Tipo de vinculação contratual.
-          example: "ARRENDAMENTO"
         numero_do_contrato:
           type: string
           description: Número do contrato vinculado.

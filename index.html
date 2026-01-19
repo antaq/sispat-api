@@ -261,6 +261,7 @@
         }
         .method-get { background: #61affe; }
         .method-put { background: #fca130; }
+        .method-post { background: #49cc90; }
         section.swagger-ui.swagger-container .topbar {
             display: none;
         }
@@ -270,7 +271,7 @@
     <div class="custom-header">
         <img src="https://des-apex.antaq.gov.br/ords/r/sfc_dev/files/static/v76/img/app-105-logo.png" alt="ANTAQ" onerror="this.style.display='none'">
         <div>
-            <h1>SISPAT - API de Bens Patrimoniais <span class="version-badge">v2.1.0</span></h1>
+            <h1>SISPAT - API de Bens Patrimoniais <span class="version-badge">v2.2.0</span></h1>
             <p>Agência Nacional de Transportes Aquaviários - ANTAQ</p>
         </div>
     </div>
@@ -447,7 +448,108 @@ fetch('https://prd-apex.antaq.gov.br/ords/sfc/sispat/bens/', {
             </div>
         </div>
 
-        <!-- Seção 4: Códigos de Resposta -->
+        <!-- Seção 4: Upload de Imagem -->
+        <div class="collapsible-section">
+            <div class="collapsible-header">
+                <span>Upload de Imagem - Exemplos de Código</span>
+                <span class="method-badge method-post">POST</span>
+            </div>
+            <div class="collapsible-content">
+                <div class="collapsible-body">
+                    <p>Envia uma foto para um bem patrimonial <strong>já cadastrado</strong>.</p>
+
+                    <div class="alert alert-warning">
+                        <strong>Requisitos:</strong>
+                        <ul style="margin: 5px 0 0 0;">
+                            <li>O bem deve existir (cadastre via PUT antes)</li>
+                            <li>Tamanho máximo: <strong>5MB</strong></li>
+                            <li>Formatos aceitos: <strong>JPEG, PNG, GIF, WebP, BMP</strong></li>
+                        </ul>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <strong>Nota:</strong> O CNPJ é obtido automaticamente da API Key. Use o <code>id_cadastro_de_bens</code> retornado pelo GET ou PUT para identificar o bem.
+                    </div>
+
+                    <h4>cURL</h4>
+<pre><code>curl -X POST "https://prd-apex.antaq.gov.br/ords/sfc/sispat/bens/imagem?id_cadastro_de_bens=12345" \
+     -H "x-api-key: sispat_live_SUA_CHAVE_AQUI" \
+     -H "Content-Type: image/jpeg" \
+     -H "X-Filename: guindaste_foto_01.jpg" \
+     --data-binary @/caminho/para/foto.jpg</code></pre>
+
+                    <h4>JavaScript (Fetch API)</h4>
+<pre><code>// O id_cadastro_de_bens é obtido na resposta do GET ou PUT
+const idBem = 12345;
+const fileInput = document.getElementById('fileInput');
+const file = fileInput.files[0];
+
+fetch(`https://prd-apex.antaq.gov.br/ords/sfc/sispat/bens/imagem?id_cadastro_de_bens=${idBem}`, {
+    method: 'POST',
+    headers: {
+        'x-api-key': 'sispat_live_SUA_CHAVE_AQUI',
+        'Content-Type': file.type,
+        'X-Filename': file.name
+    },
+    body: file
+})
+.then(response => response.json())
+.then(data => {
+    console.log('Upload realizado:', data);
+    console.log('Tamanho:', data.data.size_formatted);
+})
+.catch(error => console.error('Erro:', error));</code></pre>
+
+                    <h4>Python (requests)</h4>
+<pre><code>import requests
+
+# O id_cadastro_de_bens é obtido na resposta do GET ou PUT
+id_bem = 12345
+arquivo = "/caminho/para/foto.jpg"
+
+url = f"https://prd-apex.antaq.gov.br/ords/sfc/sispat/bens/imagem?id_cadastro_de_bens={id_bem}"
+
+with open(arquivo, 'rb') as f:
+    headers = {
+        "x-api-key": "sispat_live_SUA_CHAVE_AQUI",
+        "Content-Type": "image/jpeg",
+        "X-Filename": "guindaste_foto_01.jpg"
+    }
+    response = requests.post(url, headers=headers, data=f)
+
+if response.status_code == 200:
+    data = response.json()
+    print(f"Upload realizado: {data['data']['filename']}")
+    print(f"Tamanho: {data['data']['size_formatted']}")
+else:
+    print(f"Erro {response.status_code}: {response.text}")</code></pre>
+
+                    <h4>C# (.NET HttpClient)</h4>
+<pre><code>using var client = new HttpClient();
+client.DefaultRequestHeaders.Add("x-api-key", "sispat_live_SUA_CHAVE_AQUI");
+client.DefaultRequestHeaders.Add("X-Filename", "guindaste_foto_01.jpg");
+
+// O id_cadastro_de_bens é obtido na resposta do GET ou PUT
+var idBem = 12345;
+var url = $"https://prd-apex.antaq.gov.br/ords/sfc/sispat/bens/imagem?id_cadastro_de_bens={idBem}";
+
+var imageBytes = await File.ReadAllBytesAsync("/caminho/para/foto.jpg");
+var content = new ByteArrayContent(imageBytes);
+content.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
+
+var response = await client.PostAsync(url, content);
+var json = await response.Content.ReadAsStringAsync();
+
+Console.WriteLine(json);</code></pre>
+
+                    <div class="alert alert-info">
+                        <strong>Dica:</strong> A validação verifica os <em>magic bytes</em> (assinatura) do arquivo, não apenas a extensão. Renomear um arquivo PDF para .jpg não funcionará.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção 5: Códigos de Resposta -->
         <div class="collapsible-section">
             <div class="collapsible-header">Códigos de Resposta HTTP</div>
             <div class="collapsible-content">
@@ -485,6 +587,11 @@ fetch('https://prd-apex.antaq.gov.br/ords/sfc/sispat/bens/', {
                                 <td><code>403</code></td>
                                 <td>Forbidden</td>
                                 <td>API Key não tem permissão para operar com o CNPJ informado.</td>
+                            </tr>
+                            <tr>
+                                <td><code>404</code></td>
+                                <td>Not Found</td>
+                                <td>Recurso não encontrado. No POST de imagem, indica que o bem não existe.</td>
                             </tr>
                             <tr>
                                 <td><code>422</code></td>

@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: SISPAT - API de Bens Patrimoniais
-  version: 2.1.0
+  version: 2.2.0
   description: |
     # SISPAT - API de Bens Patrimoniais
 
@@ -15,6 +15,7 @@ info:
 
     - **Consultar (GET):** Ler registros de bens existentes
     - **Cadastrar/Atualizar (PUT):** Inserir novos registros ou modificar existentes (Upsert)
+    - **Upload de Imagem (POST):** Enviar fotos dos bens patrimoniais
 
     ### Dados Disponíveis
     - Identificação do bem e dados de tombamento
@@ -136,6 +137,8 @@ servers:
 tags:
   - name: Bens Patrimoniais
     description: Operações de consulta, criação e atualização de bens patrimoniais.
+  - name: Imagens
+    description: Upload e gerenciamento de imagens dos bens patrimoniais.
 security:
   - ApiKeyAuth: []
 paths:
@@ -439,6 +442,173 @@ paths:
                     error: "Unprocessable Entity"
                     code: "VALIDATION_ERROR"
                     message: "Dados inválidos para processamento"
+        '500':
+          description: Erro interno no servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroPadrao'
+  /imagem:
+    post:
+      tags:
+        - Imagens
+      summary: Upload de imagem do bem patrimonial
+      description: |
+        Envia uma imagem (foto) para um bem patrimonial existente.
+
+        **Requisitos:**
+        - O bem patrimonial deve existir previamente (cadastrado via PUT)
+        - A API Key deve estar vinculada ao CNPJ informado
+        - Tamanho máximo do arquivo: **5MB**
+        - Formatos aceitos: **JPEG, PNG, GIF, WebP, BMP**
+
+        **Validações realizadas:**
+        1. Verificação do Content-Type declarado
+        2. Análise dos magic bytes (assinatura real do arquivo)
+        3. Validação de tamanho máximo
+        4. Correspondência entre tipo declarado e real
+
+        **Comportamento:**
+        - Se o bem já possuir uma imagem, ela será substituída
+        - O campo `IMAGEM_LAST_UPDATE` é atualizado automaticamente
+
+        **Nota:** O CNPJ é obtido automaticamente da API Key, não precisa ser informado.
+        O ID do bem (`id_cadastro_de_bens`) é retornado nas operações GET e PUT.
+      parameters:
+        - name: id_cadastro_de_bens
+          in: query
+          required: true
+          description: |
+            ID único do bem patrimonial no banco de dados.
+            Este ID é retornado nas respostas do GET (listagem) e PUT (criação/atualização).
+            O bem deve pertencer ao CNPJ vinculado à API Key.
+          schema:
+            type: integer
+          example: 12345
+        - name: X-Filename
+          in: header
+          required: false
+          description: |
+            Nome do arquivo (opcional). Se não informado, será gerado automaticamente
+            como `imagem_{id_cadastro_de_bens}.{extensao}`.
+          schema:
+            type: string
+            maxLength: 255
+          example: "guindaste_foto_01.jpg"
+      requestBody:
+        required: true
+        description: |
+          Arquivo de imagem binário.
+
+          **Formatos aceitos:** JPEG, PNG, GIF, WebP, BMP
+
+          **Tamanho máximo:** 5MB
+        content:
+          image/jpeg:
+            schema:
+              type: string
+              format: binary
+          image/png:
+            schema:
+              type: string
+              format: binary
+          image/gif:
+            schema:
+              type: string
+              format: binary
+          image/webp:
+            schema:
+              type: string
+              format: binary
+          image/bmp:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '200':
+          description: Imagem enviada com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImagemUploadResponse'
+              examples:
+                exemploSucesso:
+                  summary: Upload realizado com sucesso
+                  value:
+                    message: "Imagem enviada com sucesso."
+                    data:
+                      id_cadastro_de_bens: 12345
+                      cnpj: "04903587000108"
+                      numero_registro_patrimonial: "PAT-2024-0001"
+                      filename: "guindaste_foto_01.jpg"
+                      mimetype: "image/jpeg"
+                      size_bytes: 245780
+                      size_formatted: "240.02 KB"
+                      uploaded_at: "2024-01-15T14:30:00Z"
+        '400':
+          description: Erro de validação (arquivo inválido, tamanho excedido, etc).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroPadrao'
+              examples:
+                arquivoGrande:
+                  summary: Arquivo excede limite de tamanho
+                  value:
+                    status: 400
+                    error: "VALIDATION_ERROR"
+                    message: "Tamanho do arquivo excede o limite de 5MB. Tamanho enviado: 7.5MB."
+                tipoInvalido:
+                  summary: Tipo de arquivo não permitido
+                  value:
+                    status: 400
+                    error: "VALIDATION_ERROR"
+                    message: "Tipo de arquivo não permitido: application/pdf. Tipos aceitos: JPEG, PNG, GIF, WebP, BMP."
+                arquivoFalso:
+                  summary: Assinatura do arquivo não corresponde
+                  value:
+                    status: 400
+                    error: "VALIDATION_ERROR"
+                    message: "Content-Type declarado (image/jpeg) não corresponde ao tipo real do arquivo (image/png)."
+        '401':
+          description: Não autorizado. Chave de API ausente ou inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroPadrao'
+              examples:
+                apiKeyInvalida:
+                  summary: API Key inválida
+                  value:
+                    status: 401
+                    error: "AUTHENTICATION_ERROR"
+                    message: "Chave de API inválida ou não encontrada."
+        '403':
+          description: API Key não autorizada para o CNPJ informado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroPadrao'
+              examples:
+                cnpjNaoAutorizado:
+                  summary: CNPJ não autorizado
+                  value:
+                    status: 403
+                    error: "AUTHENTICATION_ERROR"
+                    message: "Acesso proibido: CNPJ da chave de API difere do CNPJ informado."
+        '404':
+          description: Bem patrimonial não encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroPadrao'
+              examples:
+                bemNaoEncontrado:
+                  summary: Bem não existe
+                  value:
+                    status: 404
+                    error: "VALIDATION_ERROR"
+                    message: "Bem patrimonial não encontrado. Cadastre o bem antes de enviar a imagem."
         '500':
           description: Erro interno no servidor.
           content:
@@ -1152,6 +1322,51 @@ components:
           maxLength: 4000
           description: Justificativa para depreciação especial (opcional, obrigatório se depreciacao_especial = 1).
           example: "Bem com vida útil reduzida devido ao uso intensivo em ambiente corrosivo."
+
+    ImagemUploadResponse:
+      type: object
+      description: Resposta de sucesso no upload de imagem.
+      properties:
+        message:
+          type: string
+          description: Mensagem de sucesso.
+          example: "Imagem enviada com sucesso."
+        data:
+          type: object
+          properties:
+            id_cadastro_de_bens:
+              type: integer
+              description: ID único do bem patrimonial no banco de dados.
+              example: 12345
+            cnpj:
+              type: string
+              description: CNPJ da empresa (14 dígitos, sem formatação).
+              example: "04903587000108"
+            numero_registro_patrimonial:
+              type: string
+              description: Número de registro patrimonial do bem.
+              example: "PAT-2024-0001"
+            filename:
+              type: string
+              description: Nome do arquivo armazenado.
+              example: "guindaste_foto_01.jpg"
+            mimetype:
+              type: string
+              description: Tipo MIME do arquivo.
+              example: "image/jpeg"
+            size_bytes:
+              type: integer
+              description: Tamanho do arquivo em bytes.
+              example: 245780
+            size_formatted:
+              type: string
+              description: Tamanho do arquivo formatado (KB ou MB).
+              example: "240.02 KB"
+            uploaded_at:
+              type: string
+              format: date-time
+              description: Data e hora do upload (ISO 8601).
+              example: "2024-01-15T14:30:00Z"
 
     BemPatrimonialResponse:
       type: object

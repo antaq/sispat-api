@@ -279,8 +279,8 @@ paths:
                   numero_do_contrato: "CT-2024-001"
                   cod_trigrama: "GND"
                   capitulo: 84
-                  posicao: 26
-                  subposicao: 20
+                  posicao: 8427
+                  subposicao: 842710
                   nome_item: "Guindaste portuário"
                   especificacao_tecnica: "Guindaste móvel sobre pneus, capacidade 50t"
                   cor: "Amarelo"
@@ -299,7 +299,7 @@ paths:
                   vida_util_anos: 20
                   taxa_depreciacao: 5.00
                   data_de_avaliacao: "2024-01-15"
-                  conta_contabil: "1.2.3.1.1.01.01"
+                  conta_contabil: "10.1.2.01"
                   historico: 1
                   situacao: 1
                   estado_de_conservacao: 3
@@ -344,7 +344,7 @@ paths:
                   vinculacao_contratual: 2
                   tipo_de_bem: 5
                   grupo_de_bens: 4
-                  conta_contabil: "1.2.3.0.0"
+                  conta_contabil: "10.1.2.01"
                   data_de_avaliacao: "2025-01-01"
                   valor_justo_de_mercado: 140000.00
                   valor_residual: 10000.00

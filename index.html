@@ -41,7 +41,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SISPAT - API de Bens Patrimoniais</title>
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css">
-    <link rel="icon" type="image/png" href="https://des-apex.antaq.gov.br/ords/r/sfc_dev/147/files/static/v119/icons/app-icon-32.png">
+    <link rel="icon" type="image/png" href="https://prd-apex.antaq.gov.br/ords/r/sfc/120/files/static/v119/icons/app-icon-32.png">
     <style>
         html {
             box-sizing: border-box;
@@ -269,7 +269,7 @@
 </head>
 <body>
     <div class="custom-header">
-        <img src="https://des-apex.antaq.gov.br/ords/r/sfc_dev/files/static/v76/img/app-105-logo.png" alt="ANTAQ" onerror="this.style.display='none'">
+        <img src="https://prd-apex.antaq.gov.br/ords/r/sfc/files/static/v76/img/app-105-logo.png" alt="ANTAQ" onerror="this.style.display='none'">
         <div>
             <h1>SISPAT - API de Bens Patrimoniais <span class="version-badge">v2.2.0</span></h1>
             <p>Agência Nacional de Transportes Aquaviários - ANTAQ</p>
@@ -314,7 +314,7 @@
                     <p>A operação GET retorna todos os bens patrimoniais vinculados à sua API Key.</p>
 
                     <h4>JavaScript (Fetch API)</h4>
-<pre><code>fetch('https://prd-apex.antaq.gov.br/ords/sfc/sispat/bens/', {
+<pre><code>fetch('https://prd-apex.antaq.gov.br/ords/sfc_sispat/sispat/bens/', {
     method: 'GET',
     headers: {
         'x-api-key': 'sispat_live_SUA_CHAVE_AQUI',
@@ -331,7 +331,7 @@
                     <h4>Python (requests)</h4>
 <pre><code>import requests
 
-url = "https://prd-apex.antaq.gov.br/ords/sfc/sispat/bens/"
+url = "https://prd-apex.antaq.gov.br/ords/sfc_sispat/sispat/bens/"
 headers = {
     "x-api-key": "sispat_live_SUA_CHAVE_AQUI",
     "Accept": "application/json"
@@ -352,7 +352,7 @@ else:
 client.DefaultRequestHeaders.Add("x-api-key", "sispat_live_SUA_CHAVE_AQUI");
 client.DefaultRequestHeaders.Add("Accept", "application/json");
 
-var response = await client.GetAsync("https://prd-apex.antaq.gov.br/ords/sfc/sispat/bens/");
+var response = await client.GetAsync("https://prd-apex.antaq.gov.br/ords/sfc_sispat/sispat/bens/");
 var json = await response.Content.ReadAsStringAsync();
 
 Console.WriteLine(json);</code></pre>
@@ -375,7 +375,7 @@ Console.WriteLine(json);</code></pre>
                     </div>
 
                     <h4>cURL</h4>
-<pre><code>curl -X PUT "https://prd-apex.antaq.gov.br/ords/sfc/sispat/bens/" \
+<pre><code>curl -X PUT "https://prd-apex.antaq.gov.br/ords/sfc_sispat/sispat/bens/" \
      -H "x-api-key: sispat_live_SUA_CHAVE_AQUI" \
      -H "Content-Type: application/json" \
      -H "Accept: application/json" \
@@ -427,7 +427,7 @@ Console.WriteLine(json);</code></pre>
     // ... demais campos obrigatórios
 };
 
-fetch('https://prd-apex.antaq.gov.br/ords/sfc/sispat/bens/', {
+fetch('https://prd-apex.antaq.gov.br/ords/sfc_sispat/sispat/bens/', {
     method: 'PUT',
     headers: {
         'x-api-key': 'sispat_live_SUA_CHAVE_AQUI',
@@ -469,26 +469,27 @@ fetch('https://prd-apex.antaq.gov.br/ords/sfc/sispat/bens/', {
                     </div>
 
                     <div class="alert alert-info">
-                        <strong>Nota:</strong> O CNPJ é obtido automaticamente da API Key. Use o <code>id_cadastro_de_bens</code> retornado pelo GET ou PUT para identificar o bem.
+                        <strong>Nota:</strong> O CNPJ é obtido automaticamente da API Key. O bem é identificado pelo <code>numero_registro_patrimonial</code> enviado no header <code>X-Numero-Registro-Patrimonial</code>.
                     </div>
 
                     <h4>cURL</h4>
-<pre><code>curl -X POST "https://prd-apex.antaq.gov.br/ords/sfc/sispat/bens/imagem?id_cadastro_de_bens=12345" \
+<pre><code>curl -X POST "https://prd-apex.antaq.gov.br/ords/sfc_sispat/sispat/bens/imagem" \
      -H "x-api-key: sispat_live_SUA_CHAVE_AQUI" \
+     -H "X-Numero-Registro-Patrimonial: PAT-2024-0001" \
      -H "Content-Type: image/jpeg" \
      -H "X-Filename: guindaste_foto_01.jpg" \
      --data-binary @/caminho/para/foto.jpg</code></pre>
 
                     <h4>JavaScript (Fetch API)</h4>
-<pre><code>// O id_cadastro_de_bens é obtido na resposta do GET ou PUT
-const idBem = 12345;
+<pre><code>const numRegPat = "PAT-2024-0001";
 const fileInput = document.getElementById('fileInput');
 const file = fileInput.files[0];
 
-fetch(`https://prd-apex.antaq.gov.br/ords/sfc/sispat/bens/imagem?id_cadastro_de_bens=${idBem}`, {
+fetch('https://prd-apex.antaq.gov.br/ords/sfc_sispat/sispat/bens/imagem', {
     method: 'POST',
     headers: {
         'x-api-key': 'sispat_live_SUA_CHAVE_AQUI',
+        'X-Numero-Registro-Patrimonial': numRegPat,
         'Content-Type': file.type,
         'X-Filename': file.name
     },
@@ -504,15 +505,15 @@ fetch(`https://prd-apex.antaq.gov.br/ords/sfc/sispat/bens/imagem?id_cadastro_de_
                     <h4>Python (requests)</h4>
 <pre><code>import requests
 
-# O id_cadastro_de_bens é obtido na resposta do GET ou PUT
-id_bem = 12345
+num_reg_pat = "PAT-2024-0001"
 arquivo = "/caminho/para/foto.jpg"
 
-url = f"https://prd-apex.antaq.gov.br/ords/sfc/sispat/bens/imagem?id_cadastro_de_bens={id_bem}"
+url = "https://prd-apex.antaq.gov.br/ords/sfc_sispat/sispat/bens/imagem"
 
 with open(arquivo, 'rb') as f:
     headers = {
         "x-api-key": "sispat_live_SUA_CHAVE_AQUI",
+        "X-Numero-Registro-Patrimonial": num_reg_pat,
         "Content-Type": "image/jpeg",
         "X-Filename": "guindaste_foto_01.jpg"
     }
@@ -528,11 +529,10 @@ else:
                     <h4>C# (.NET HttpClient)</h4>
 <pre><code>using var client = new HttpClient();
 client.DefaultRequestHeaders.Add("x-api-key", "sispat_live_SUA_CHAVE_AQUI");
+client.DefaultRequestHeaders.Add("X-Numero-Registro-Patrimonial", "PAT-2024-0001");
 client.DefaultRequestHeaders.Add("X-Filename", "guindaste_foto_01.jpg");
 
-// O id_cadastro_de_bens é obtido na resposta do GET ou PUT
-var idBem = 12345;
-var url = $"https://prd-apex.antaq.gov.br/ords/sfc/sispat/bens/imagem?id_cadastro_de_bens={idBem}";
+var url = "https://prd-apex.antaq.gov.br/ords/sfc_sispat/sispat/bens/imagem";
 
 var imageBytes = await File.ReadAllBytesAsync("/caminho/para/foto.jpg");
 var content = new ByteArrayContent(imageBytes);

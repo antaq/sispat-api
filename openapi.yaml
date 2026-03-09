@@ -49,7 +49,7 @@ info:
     > **Atenção:** A chave é pessoal e intransferível. Ela concede poderes de leitura e escrita nos dados da sua organização. Mantenha-a em sigilo absoluto.
 
     ### Produção (Oficial)
-    - **Base URL:** `https://prd-apex.antaq.gov.br/ords/sfc/sispat/bens`
+    - **Base URL:** `https://prd-apex.antaq.gov.br/ords/sfc_sispat/sispat/bens`
     - **Padrão da Chave:** Inicia obrigatoriamente com `sispat_live_...`
     - **Uso:** Dados oficiais e definitivos com valor regulatório
 
@@ -130,7 +130,7 @@ info:
     name: Licença Pública
     url: https://www.gov.br/governodigital/pt-br/dados-abertos
 servers:
-  - url: 'https://prd-apex.antaq.gov.br/ords/sfc/sispat/bens'
+  - url: 'https://prd-apex.antaq.gov.br/ords/sfc_sispat/sispat/bens'
     description: Produção (Oficial)
   - url: 'https://des-apex.antaq.gov.br/ords/sfc_sispat/sispat/bens'
     description: Desenvolvimento (Sandbox)
@@ -184,7 +184,7 @@ paths:
                       total_records: 150
                     items:
                       - id_cadastro_de_bens: 26
-                        num_cnpj: "04903587000108"
+                        cnpj: "04903587000108"
                         numero_registro_patrimonial: PAT-2024-BSB-099
                         numero_do_contrato: 058/2023
                         nome_item: Tanque de armazenamento
@@ -473,24 +473,24 @@ paths:
         - O campo `IMAGEM_LAST_UPDATE` é atualizado automaticamente
 
         **Nota:** O CNPJ é obtido automaticamente da API Key, não precisa ser informado.
-        O ID do bem (`id_cadastro_de_bens`) é retornado nas operações GET e PUT.
+        O bem é identificado pelo `numero_registro_patrimonial` enviado via header.
       parameters:
-        - name: id_cadastro_de_bens
-          in: query
+        - name: X-Numero-Registro-Patrimonial
+          in: header
           required: true
           description: |
-            ID único do bem patrimonial no banco de dados.
-            Este ID é retornado nas respostas do GET (listagem) e PUT (criação/atualização).
+            Número de registro patrimonial do bem.
             O bem deve pertencer ao CNPJ vinculado à API Key.
           schema:
-            type: integer
-          example: 12345
+            type: string
+            maxLength: 50
+          example: "PAT-2024-0001"
         - name: X-Filename
           in: header
           required: false
           description: |
             Nome do arquivo (opcional). Se não informado, será gerado automaticamente
-            como `imagem_{id_cadastro_de_bens}.{extensao}`.
+            como `imagem_{id}.{extensao}`.
           schema:
             type: string
             maxLength: 255
@@ -674,7 +674,7 @@ components:
           type: integer
           description: Identificador único do cadastro do bem (apenas leitura).
           example: 12345
-        num_cnpj:
+        cnpj:
           type: string
           description: CNPJ da empresa (14 dígitos, sem formatação).
           example: "04903587000108"

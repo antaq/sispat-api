@@ -288,12 +288,12 @@
                     <p>Antes de iniciar a integração, valide o acesso ao ambiente de desenvolvimento:</p>
 
                     <h4>cURL (Terminal/CMD)</h4>
-<pre><code>curl -X GET "https://des-apex.antaq.gov.br/ords/sfc_dev/sispat/bens/" \
+<pre><code>curl -X GET "https://des-apex.antaq.gov.br/ords/sfc_sispat/sispat/bens/" \
      -H "x-api-key: sispat_test_SUA_CHAVE_TESTE" \
      -H "Accept: application/json"</code></pre>
 
                     <h4>PowerShell (Windows)</h4>
-<pre><code>Invoke-RestMethod -Uri "https://des-apex.antaq.gov.br/ords/sfc_dev/sispat/bens/" `
+<pre><code>Invoke-RestMethod -Uri "https://des-apex.antaq.gov.br/ords/sfc_sispat/sispat/bens/" `
     -Headers @{"x-api-key"="sispat_test_SUA_CHAVE_TESTE"; "Accept"="application/json"}</code></pre>
 
                     <div class="alert alert-info">
@@ -380,29 +380,29 @@ Console.WriteLine(json);</code></pre>
      -H "Content-Type: application/json" \
      -H "Accept: application/json" \
      -d '{
-       "cnpj": "04.903.587/0001-08",
+       "cnpj": 4903587000108,
        "numero_registro_patrimonial": "PAT-2024-0001",
        "numero_do_contrato": "CT-2024-001",
        "nome_item": "Guindaste portuário",
-       "capitulo": "84",
-       "posicao": "26",
-       "subposicao": "20",
+       "capitulo": 84,
+       "posicao": 26,
+       "subposicao": 20,
        "especificacao_tecnica": "Guindaste móvel sobre pneus, capacidade 50t",
        "cor": "Amarelo",
        "fornecedor": "Liebherr Brasil",
        "capacidade": "50 toneladas",
-       "unidade_de_medida": "UN",
-       "latitude": "-23.9618",
-       "longitude": "-46.3322",
+       "unidade_de_medida": 17,
+       "latitude": -23.9618,
+       "longitude": -46.3322,
        "destinacao": "Operação portuária",
        "modalidade_de_tombamento": 1,
        "data_de_tombamento": "2024-01-15",
-       "valor_original_de_compra": "1500000.00",
+       "valor_original_de_compra": 1500000.00,
        "fonte_de_recurso": 1,
-       "valor_justo_de_mercado": "1400000.00",
-       "valor_residual": "150000.00",
-       "vida_util_anos": "20",
-       "taxa_depreciacao": "5.00",
+       "valor_justo_de_mercado": 1400000.00,
+       "valor_residual": 150000.00,
+       "vida_util_anos": 20,
+       "taxa_depreciacao": 5.00,
        "data_de_avaliacao": "2024-01-15",
        "conta_contabil": "1.2.3.1.1.01.01",
        "historico": 1,
@@ -419,7 +419,7 @@ Console.WriteLine(json);</code></pre>
 
                     <h4>JavaScript (Fetch API)</h4>
 <pre><code>const bem = {
-    cnpj: "04.903.587/0001-08",
+    cnpj: 4903587000108,
     numero_registro_patrimonial: "PAT-2024-0001",
     numero_do_contrato: "CT-2024-001",
     nome_item: "Guindaste portuário",

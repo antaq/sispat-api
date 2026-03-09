@@ -54,7 +54,7 @@ info:
     - **Uso:** Dados oficiais e definitivos com valor regulatório
 
     ### Desenvolvimento (Sandbox)
-    - **Base URL:** `https://des-apex.antaq.gov.br/ords/sfc_dev/sispat/bens`
+    - **Base URL:** `https://des-apex.antaq.gov.br/ords/sfc_sispat/sispat/bens`
     - **Padrão da Chave:** Inicia obrigatoriamente com `sispat_test_...`
 
     > **Avisos Importantes sobre o Sandbox:**
@@ -132,7 +132,7 @@ info:
 servers:
   - url: 'https://prd-apex.antaq.gov.br/ords/sfc/sispat/bens'
     description: Produção (Oficial)
-  - url: 'https://des-apex.antaq.gov.br/ords/sfc_dev/sispat/bens'
+  - url: 'https://des-apex.antaq.gov.br/ords/sfc_sispat/sispat/bens'
     description: Desenvolvimento (Sandbox)
 tags:
   - name: Bens Patrimoniais
@@ -274,30 +274,30 @@ paths:
               exemploCompleto:
                 summary: Exemplo completo para criação de bem
                 value:
-                  cnpj: "04.903.587/0001-08"
+                  cnpj: 4903587000108
                   numero_registro_patrimonial: "PAT-2024-0001"
                   numero_do_contrato: "CT-2024-001"
                   cod_trigrama: "GND"
-                  capitulo: "84"
-                  posicao: "26"
-                  subposicao: "20"
+                  capitulo: 84
+                  posicao: 26
+                  subposicao: 20
                   nome_item: "Guindaste portuário"
                   especificacao_tecnica: "Guindaste móvel sobre pneus, capacidade 50t"
                   cor: "Amarelo"
                   fornecedor: "Liebherr Brasil"
                   capacidade: "50 toneladas"
-                  unidade_de_medida: "UN"
-                  latitude: "-23.9618"
-                  longitude: "-46.3322"
+                  unidade_de_medida: 17
+                  latitude: -23.9618
+                  longitude: -46.3322
                   destinacao: "Operação portuária"
                   modalidade_de_tombamento: 1
                   data_de_tombamento: "2024-01-15"
-                  valor_original_de_compra: "1500000.00"
+                  valor_original_de_compra: 1500000.00
                   fonte_de_recurso: 1
-                  valor_justo_de_mercado: "1400000.00"
-                  valor_residual: "150000.00"
-                  vida_util_anos: "20"
-                  taxa_depreciacao: "5.00"
+                  valor_justo_de_mercado: 1400000.00
+                  valor_residual: 150000.00
+                  vida_util_anos: 20
+                  taxa_depreciacao: 5.00
                   data_de_avaliacao: "2024-01-15"
                   conta_contabil: "1.2.3.1.1.01.01"
                   historico: 1
@@ -313,28 +313,28 @@ paths:
               exemploTeste:
                 summary: Exemplo para Ambiente de Teste
                 value:
-                  cnpj: "12.345.123/4123-12"
+                  cnpj: 12345123412312
                   numero_registro_patrimonial: "TESTE-DEV-001"
                   numero_do_contrato: "CTR-TESTE/2025"
                   nome_item: "Empilhadeira de Teste Sandbox"
                   cod_trigrama: "TSB"
-                  capitulo: "84"
-                  posicao: "8427"
-                  subposicao: "842710"
+                  capitulo: 84
+                  posicao: 8427
+                  subposicao: 842710
                   cor: "Amarelo"
                   fornecedor: "Oracle Apex Solutions"
                   modalidade_de_tombamento: 1
-                  latitude: "-23.961927"
-                  longitude: "-46.295431"
+                  latitude: -23.961927
+                  longitude: -46.295431
                   destinacao: "Pátio de Testes"
                   data_de_tombamento: "2025-01-01"
                   capacidade: "5 toneladas"
-                  unidade_de_medida: "UN"
+                  unidade_de_medida: 17
                   especificacao_tecnica: "Empilhadeira para testes de carga via API."
-                  valor_original_de_compra: "150000.00"
+                  valor_original_de_compra: 150000.00
                   fonte_de_recurso: 1
-                  vida_util_anos: "10"
-                  taxa_depreciacao: "10.00"
+                  vida_util_anos: 10
+                  taxa_depreciacao: 10.00
                   historico: 1
                   situacao: 1
                   estado_de_conservacao: 3
@@ -346,8 +346,8 @@ paths:
                   grupo_de_bens: 4
                   conta_contabil: "1.2.3.0.0"
                   data_de_avaliacao: "2025-01-01"
-                  valor_justo_de_mercado: "140000.00"
-                  valor_residual: "10000.00"
+                  valor_justo_de_mercado: 140000.00
+                  valor_residual: 10000.00
                   sigla_uf: "DF"
       responses:
         '200':

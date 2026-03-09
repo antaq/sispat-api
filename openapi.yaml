@@ -183,8 +183,7 @@ paths:
                       fetch_size: 25
                       total_records: 150
                     items:
-                      - id_cadastro_de_bens: 26
-                        cnpj: "04903587000108"
+                      - cnpj: "04903587000108"
                         numero_registro_patrimonial: PAT-2024-BSB-099
                         numero_do_contrato: 058/2023
                         nome_item: Tanque de armazenamento
@@ -537,7 +536,6 @@ paths:
                   value:
                     message: "Imagem enviada com sucesso."
                     data:
-                      id_cadastro_de_bens: 12345
                       cnpj: "04903587000108"
                       numero_registro_patrimonial: "PAT-2024-0001"
                       filename: "guindaste_foto_01.jpg"
@@ -670,10 +668,6 @@ components:
       type: object
       description: Dados de um bem patrimonial retornado pela API.
       properties:
-        id_cadastro_de_bens:
-          type: integer
-          description: Identificador único do cadastro do bem (apenas leitura).
-          example: 12345
         cnpj:
           type: string
           description: CNPJ da empresa (14 dígitos, sem formatação).
@@ -1334,10 +1328,6 @@ components:
         data:
           type: object
           properties:
-            id_cadastro_de_bens:
-              type: integer
-              description: ID único do bem patrimonial no banco de dados.
-              example: 12345
             cnpj:
               type: string
               description: CNPJ da empresa (14 dígitos, sem formatação).

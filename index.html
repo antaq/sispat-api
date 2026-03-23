@@ -262,6 +262,23 @@
         .method-get { background: #61affe; }
         .method-put { background: #fca130; }
         .method-post { background: #49cc90; }
+        .export-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.5);
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            white-space: nowrap;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .export-btn:hover {
+            background: rgba(255,255,255,0.25);
+            border-color: white;
+        }
         section.swagger-ui.swagger-container .topbar {
             display: none;
         }
@@ -270,10 +287,13 @@
 <body>
     <div class="custom-header">
         <img src="https://prd-apex.antaq.gov.br/ords/r/sfc/files/static/v76/img/app-105-logo.png" alt="ANTAQ" onerror="this.style.display='none'">
-        <div>
+        <div style="flex: 1;">
             <h1>SISPAT - API de Bens Patrimoniais <span class="version-badge">v2.2.0</span></h1>
             <p>Agência Nacional de Transportes Aquaviários - ANTAQ</p>
         </div>
+        <a href="openapi.yaml" download="sispat-openapi.yaml" class="export-btn" title="Baixar especificação OpenAPI para importar no Postman, Bruno, Insomnia, etc.">
+            &#11123; Exportar OpenAPI
+        </a>
     </div>
 
     <!-- Guia de Integração Rápida -->

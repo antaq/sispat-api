@@ -250,9 +250,8 @@ paths:
         **Campos Obrigatórios:**
         - cnpj, numero_registro_patrimonial, numero_do_contrato
         - capitulo, posicao, subposicao (NCM)
-        - nome_item, especificacao_tecnica, cor, fornecedor
-        - capacidade, unidade_de_medida, latitude, longitude
-        - destinacao, modalidade_de_tombamento, data_de_tombamento
+        - nome_item, especificacao_tecnica, latitude, longitude
+        - modalidade_de_tombamento, data_de_tombamento
         - valor_original_de_compra, fonte_de_recurso
         - valor_justo_de_mercado, valor_residual, vida_util_anos
         - taxa_depreciacao, data_de_avaliacao, conta_contabil
@@ -962,13 +961,8 @@ components:
         - subposicao
         - nome_item
         - especificacao_tecnica
-        - cor
-        - fornecedor
-        - capacidade
-        - unidade_de_medida
         - latitude
         - longitude
-        - destinacao
         - modalidade_de_tombamento
         - data_de_tombamento
         - valor_original_de_compra
@@ -991,9 +985,9 @@ components:
         - sigla_uf
       properties:
         cnpj:
-          type: string
-          description: CNPJ da empresa (aceita formatado ou apenas números).
-          example: "04.903.587/0001-08"
+          type: integer
+          description: CNPJ da empresa (apenas números, sem formatação).
+          example: 4903587000108
         numero_registro_patrimonial:
           type: string
           maxLength: 50
@@ -1009,23 +1003,23 @@ components:
           description: Código trigrama do bem (opcional).
           example: "GND"
         capitulo:
-          type: string
+          type: integer
           description: |
             Capítulo NCM (Nomenclatura Comum do Mercosul).
             A combinação de capítulo + posição + subposição é validada contra a tabela SISPAT_SUBPOSICOES.
-          example: "84"
+          example: 84
         posicao:
-          type: string
+          type: integer
           description: |
             Posição NCM.
             A combinação de capítulo + posição + subposição é validada contra a tabela SISPAT_SUBPOSICOES.
-          example: "26"
+          example: 8427
         subposicao:
-          type: string
+          type: integer
           description: |
             Subposição NCM.
             A combinação de capítulo + posição + subposição é validada contra a tabela SISPAT_SUBPOSICOES.
-          example: "20"
+          example: 842710
         nome_item:
           type: string
           maxLength: 4000

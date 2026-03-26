@@ -42,9 +42,28 @@ info:
 
     ### Como Obter sua API Key
 
-    1. Acesse o sistema SisPAT com suas credenciais
-    2. Navegue até **"Gerenciador de API"**
-    3. Gere uma nova credencial
+    O acesso ao SisPAT é realizado exclusivamente através do **Login Único Gov.BR**.
+
+    **Ambiente de Produção:**
+    1. Acesse o SisPAT em [prd-apex.antaq.gov.br](https://prd-apex.antaq.gov.br) e clique em **"Entrar com Gov.BR"**
+    2. Informe seu CPF e senha do Gov.BR
+    3. Após autenticado, navegue até **"Gerenciador de API"**
+    4. Gere uma nova credencial
+
+    **Ambiente de Homologação (Sandbox):**
+
+    Para utilizar o ambiente de homologação, é necessário criar uma conta no ambiente de **staging** do Login Único Gov.BR:
+    1. Acesse [sso.staging.acesso.gov.br](https://sso.staging.acesso.gov.br/)
+    2. Informe o CPF
+    3. Concorde com os termos de uso
+    4. No passo de validação por reconhecimento facial, escolha **"Não tenho celular"** e na tela seguinte clique em **"Tentar de outra forma"**
+    5. Use os **dados pessoais fictícios** abaixo para validação:
+       - **Data de nascimento:** 01/01/1980
+       - **Nome da mãe:** MAMAE
+    6. Cadastre uma senha conforme as orientações demonstradas
+    7. Informe um e-mail ou telefone celular para confirmação do cadastro
+
+    Após o cadastro, acesse o SisPAT Sandbox em [des-apex.antaq.gov.br](https://des-apex.antaq.gov.br) e clique em **"Entrar com Gov.BR"**. Navegue até **"Gerenciador de API"** e gere uma credencial de teste.
 
     > **Atenção:** A chave é pessoal e intransferível. Ela concede poderes de leitura e escrita nos dados da sua organização. Mantenha-a em sigilo absoluto.
 

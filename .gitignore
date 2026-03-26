@@ -1,3 +1,5 @@
 *.sql
 .vscode
+.DS_Store
 uploads/
+bruno/

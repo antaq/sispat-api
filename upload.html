@@ -955,6 +955,7 @@
                 // Find header row (row with API field names)
                 var headerRowIndex = -1;
                 var headerMap = {};
+                var bestMatchCount = 0;
 
                 for (var r = 0; r < Math.min(3, rawData.length); r++) {
                     var row = rawData[r];
@@ -971,7 +972,8 @@
                             }
                         }
                     }
-                    if (matches > headerRowIndex) {
+                    if (matches > bestMatchCount) {
+                        bestMatchCount = matches;
                         headerRowIndex = r;
                         headerMap = tempMap;
                     }

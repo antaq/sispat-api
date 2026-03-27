@@ -1640,6 +1640,7 @@
 
                 // Show progress, hide validation
                 document.getElementById('cardProgress').classList.remove('hidden');
+                document.getElementById('cardProgress').scrollIntoView({ behavior: 'smooth', block: 'start' });
                 document.getElementById('progressActions').classList.remove('hidden');
                 document.getElementById('resultsActions').classList.add('hidden');
                 document.getElementById('countCreated').textContent = '0';

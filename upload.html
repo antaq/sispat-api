@@ -983,18 +983,28 @@
 
                 // Parse data rows (skip header row and optional label row)
                 var startRow = headerRowIndex + 1;
-                // Check if next row is label row
+                // Check if next row is label row (row 2 in template has labels like "CNPJ *", "Nº Registro Patrimonial *")
                 if (startRow < rawData.length) {
                     var nextRow = rawData[startRow];
-                    var looksLikeLabels = false;
+                    var starCount = 0;
                     var labelMatches = 0;
+                    var mappedCols = Object.keys(headerMap).length;
                     for (var c in headerMap) {
                         var val = String(nextRow[c] || '').trim();
-                        if (val.indexOf('*') >= 0 || val === FIELD_DEFINITIONS[headerMap[c]].label || val === FIELD_DEFINITIONS[headerMap[c]].label + ' *') {
-                            labelMatches++;
+                        if (!val) continue;
+                        // Check if cell contains '*' (required field marker)
+                        if (val.indexOf('*') >= 0) starCount++;
+                        // Check if cell value looks like a label (non-numeric, non-date text)
+                        var fieldDef = FIELD_DEFINITIONS[headerMap[c]];
+                        if (fieldDef) {
+                            var labelNorm = fieldDef.label.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                            var valNorm = val.replace(/\s*\*\s*$/, '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                            if (valNorm === labelNorm || labelNorm.indexOf(valNorm) >= 0 || valNorm.indexOf(labelNorm) >= 0) {
+                                labelMatches++;
+                            }
                         }
                     }
-                    if (labelMatches > Object.keys(headerMap).length * 0.3) {
+                    if (starCount >= 3 || labelMatches > mappedCols * 0.2) {
                         startRow++; // skip label row
                     }
                 }

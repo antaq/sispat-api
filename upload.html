@@ -609,12 +609,14 @@
         // =====================================================================
         var CONTAS_CONTABEIS = null; // Set populated on load
         var SUBPOSICOES_NCM = null;  // Set populated on load
+        var PORTOS_TRIGRAMA = null;  // Set populated on load
 
         async function loadValidationData() {
             try {
-                var [contasResp, subsResp] = await Promise.all([
+                var [contasResp, subsResp, portosResp] = await Promise.all([
                     fetch('data/contas_contabeis.json'),
-                    fetch('data/subposicoes_ncm.json')
+                    fetch('data/subposicoes_ncm.json'),
+                    fetch('data/portos_trigrama.json')
                 ]);
                 if (contasResp.ok) {
                     var contasArr = await contasResp.json();
@@ -625,6 +627,11 @@
                     var subsArr = await subsResp.json();
                     SUBPOSICOES_NCM = new Set(subsArr);
                     console.log('Subposições NCM carregadas:', SUBPOSICOES_NCM.size);
+                }
+                if (portosResp.ok) {
+                    var portosArr = await portosResp.json();
+                    PORTOS_TRIGRAMA = new Set(portosArr);
+                    console.log('Trigramas de portos carregados:', PORTOS_TRIGRAMA.size);
                 }
             } catch (e) {
                 console.warn('Não foi possível carregar dados de validação:', e.message);
@@ -698,7 +705,7 @@
             cnpj:                        { label: 'CNPJ', required: true, type: 'string', apiType: 'integer', maxLength: 14, example: '04903587000108', description: 'CNPJ da empresa (14 dígitos, sem formatação)' },
             numero_registro_patrimonial: { label: 'Nº Registro Patrimonial', required: true, type: 'string', maxLength: 50, example: 'PAT-2024-0001', description: 'Identificador único do bem na empresa' },
             numero_do_contrato:          { label: 'Nº do Contrato', required: true, type: 'string', maxLength: 255, example: 'CT-2024-001', description: 'Número do contrato vinculado' },
-            cod_trigrama:                { label: 'Cód. Trigrama', required: false, type: 'string', maxLength: 3, example: 'GND', description: 'Código trigrama do porto (validado no servidor)' },
+            cod_trigrama:                { label: 'Cód. Trigrama', required: false, type: 'string', maxLength: 3, example: 'GND', description: 'Código trigrama do porto brasileiro (validado contra tabela SISPAT)' },
             capitulo:                    { label: 'Capítulo NCM', required: true, type: 'integer', example: 84, description: 'Capítulo NCM' },
             posicao:                     { label: 'Posição NCM', required: true, type: 'integer', example: 8427, description: 'Posição NCM' },
             subposicao:                  { label: 'Subposição NCM', required: true, type: 'integer', example: 842710, description: 'Subposição NCM' },
@@ -906,7 +913,7 @@
                 refSheet.getRow(noteRow).getCell(1).font = { bold: true };
                 refSheet.getRow(noteRow + 1).getCell(1).value = '1. data_de_avaliacao deve ser igual ou posterior a data_de_tombamento';
                 refSheet.getRow(noteRow + 2).getCell(1).value = '2. Se depreciacao_especial = 1 (Sim), desc_deprec_especial é obrigatório';
-                refSheet.getRow(noteRow + 3).getCell(1).value = '3. Os campos conta_contabil e NCM (capitulo+posicao+subposicao) são validados localmente e no servidor. cod_trigrama é validado apenas no servidor.';
+                refSheet.getRow(noteRow + 3).getCell(1).value = '3. Os campos conta_contabil, NCM (capitulo+posicao+subposicao) e cod_trigrama são validados localmente e no servidor.';
 
                 // Generate and download
                 var buffer = await wb.xlsx.writeBuffer();
@@ -1197,9 +1204,13 @@
                     }
                 }
 
-                // Warning: cod_trigrama (optional in spec, required server-side)
+                // Validação: cod_trigrama (optional in spec, required server-side)
                 if (!record.cod_trigrama || String(record.cod_trigrama).trim() === '') {
                     warnings.push('cod_trigrama vazio - a API pode rejeitar esta linha (campo obrigatório no servidor)');
+                } else if (PORTOS_TRIGRAMA) {
+                    if (!PORTOS_TRIGRAMA.has(String(record.cod_trigrama).trim())) {
+                        errors.push('"Cód. Trigrama": código "' + record.cod_trigrama + '" não encontrado na tabela de portos brasileiros');
+                    }
                 }
 
                 // Validação local: conta_contabil

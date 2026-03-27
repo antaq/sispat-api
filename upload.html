@@ -605,6 +605,33 @@
         'use strict';
 
         // =====================================================================
+        // VALIDATION DATA (loaded from JSON files)
+        // =====================================================================
+        var CONTAS_CONTABEIS = null; // Set populated on load
+        var SUBPOSICOES_NCM = null;  // Set populated on load
+
+        async function loadValidationData() {
+            try {
+                var [contasResp, subsResp] = await Promise.all([
+                    fetch('data/contas_contabeis.json'),
+                    fetch('data/subposicoes_ncm.json')
+                ]);
+                if (contasResp.ok) {
+                    var contasArr = await contasResp.json();
+                    CONTAS_CONTABEIS = new Set(contasArr);
+                    console.log('Contas contábeis carregadas:', CONTAS_CONTABEIS.size);
+                }
+                if (subsResp.ok) {
+                    var subsArr = await subsResp.json();
+                    SUBPOSICOES_NCM = new Set(subsArr);
+                    console.log('Subposições NCM carregadas:', SUBPOSICOES_NCM.size);
+                }
+            } catch (e) {
+                console.warn('Não foi possível carregar dados de validação:', e.message);
+            }
+        }
+
+        // =====================================================================
         // ENUM_MAPS
         // =====================================================================
         const ENUM_MAPS = {
@@ -693,7 +720,7 @@
             vida_util_anos:              { label: 'Vida Útil (Anos)', required: true, type: 'integer', min: 1, example: 20, description: 'Vida útil em anos (> 0)' },
             taxa_depreciacao:            { label: 'Taxa Depreciação (%)', required: true, type: 'number', min: 0, max: 100, example: 5.00, description: 'Taxa anual de depreciação (0 a 100)' },
             data_de_avaliacao:           { label: 'Data de Avaliação', required: true, type: 'date', example: '2024-01-15', description: 'Data da avaliação (AAAA-MM-DD), >= data de tombamento' },
-            conta_contabil:              { label: 'Conta Contábil', required: true, type: 'string', maxLength: 50, example: '1.2.3.1.1.01.01', description: 'Conta contábil (validada no servidor)' },
+            conta_contabil:              { label: 'Conta Contábil', required: true, type: 'string', maxLength: 50, example: '1.2.3.1.1.01.01', description: 'Conta contábil (validada contra tabela SISPAT)' },
             historico:                   { label: 'Histórico', required: true, type: 'enum', enumMap: 'historico', example: '1 - Tombado', description: 'Status histórico do bem' },
             situacao:                    { label: 'Situação', required: true, type: 'enum', enumMap: 'situacao', example: '1 - Servível', description: 'Situação atual do bem' },
             estado_de_conservacao:       { label: 'Estado de Conservação', required: true, type: 'enum', enumMap: 'estado_de_conservacao', example: '3 - Bom', description: 'Estado de conservação' },
@@ -879,7 +906,7 @@
                 refSheet.getRow(noteRow).getCell(1).font = { bold: true };
                 refSheet.getRow(noteRow + 1).getCell(1).value = '1. data_de_avaliacao deve ser igual ou posterior a data_de_tombamento';
                 refSheet.getRow(noteRow + 2).getCell(1).value = '2. Se depreciacao_especial = 1 (Sim), desc_deprec_especial é obrigatório';
-                refSheet.getRow(noteRow + 3).getCell(1).value = '3. Os campos conta_contabil, NCM (capitulo+posicao+subposicao) e cod_trigrama são validados no servidor';
+                refSheet.getRow(noteRow + 3).getCell(1).value = '3. Os campos conta_contabil e NCM (capitulo+posicao+subposicao) são validados localmente e no servidor. cod_trigrama é validado apenas no servidor.';
 
                 // Generate and download
                 var buffer = await wb.xlsx.writeBuffer();
@@ -1175,12 +1202,38 @@
                     warnings.push('cod_trigrama vazio - a API pode rejeitar esta linha (campo obrigatório no servidor)');
                 }
 
-                // Warning: server-side only validations
+                // Validação local: conta_contabil
                 if (record.conta_contabil) {
-                    warnings.push('conta_contabil será validada no servidor contra a tabela de contas');
+                    if (CONTAS_CONTABEIS) {
+                        if (!CONTAS_CONTABEIS.has(String(record.conta_contabil).trim())) {
+                            errors.push('"Conta Contábil": código "' + record.conta_contabil + '" não encontrado na tabela de contas contábeis');
+                        }
+                    } else {
+                        warnings.push('conta_contabil será validada apenas no servidor (dados de referência não carregados)');
+                    }
                 }
+
+                // Validação local: NCM (capitulo + posicao + subposicao)
                 if (record.capitulo && record.posicao && record.subposicao) {
-                    warnings.push('Combinação NCM (capitulo+posicao+subposicao) será validada no servidor');
+                    if (SUBPOSICOES_NCM) {
+                        var sub = Number(record.subposicao);
+                        if (!SUBPOSICOES_NCM.has(sub)) {
+                            errors.push('"NCM": subposição ' + record.subposicao + ' não encontrada na tabela de subposições');
+                        } else {
+                            // Verificar consistência: capitulo = 2 primeiros dígitos, posicao = 4 primeiros
+                            var subStr = String(sub);
+                            var expectedCap = parseInt(subStr.substring(0, 2), 10);
+                            var expectedPos = parseInt(subStr.substring(0, 4), 10);
+                            if (Number(record.capitulo) !== expectedCap) {
+                                errors.push('"Capítulo NCM": valor ' + record.capitulo + ' não corresponde à subposição ' + sub + ' (esperado: ' + expectedCap + ')');
+                            }
+                            if (Number(record.posicao) !== expectedPos) {
+                                errors.push('"Posição NCM": valor ' + record.posicao + ' não corresponde à subposição ' + sub + ' (esperado: ' + expectedPos + ')');
+                            }
+                        }
+                    } else {
+                        warnings.push('Combinação NCM será validada apenas no servidor (dados de referência não carregados)');
+                    }
                 }
 
                 return { errors: errors, warnings: warnings };
@@ -1369,9 +1422,12 @@
             },
 
             checkKeyEnvMatch: function() {
-                var key = document.getElementById('apiKeyInput').value.trim();
+                var input = document.getElementById('apiKeyInput');
+                var key = input.value.trim();
                 var env = document.querySelector('input[name="env"]:checked').value;
                 var alert = document.getElementById('alertEnvMismatch');
+
+                input.placeholder = env === 'production' ? 'sispat_live_...' : 'sispat_test_...';
 
                 if (!key) { alert.classList.add('hidden'); return; }
 
@@ -1721,7 +1777,10 @@
         window.UIController = UIController;
 
         // Bootstrap
-        document.addEventListener('DOMContentLoaded', UIController.init);
+        document.addEventListener('DOMContentLoaded', function() {
+            UIController.init();
+            loadValidationData();
+        });
     })();
     </script>
 </body>

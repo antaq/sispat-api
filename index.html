@@ -809,6 +809,117 @@ Console.WriteLine(json);</code></pre>
                 </div>
             </div>
         </div>
+
+        <!-- Seção 6: Changelog -->
+        <div class="collapsible-section">
+            <div class="collapsible-header">Changelog da API</div>
+            <div class="collapsible-content">
+                <div class="collapsible-body">
+                    <p>
+                        Histórico das mudanças relevantes para integradores, mantido para
+                        <strong>transparência ativa</strong> com as entidades reguladas e suas
+                        equipes de TI. Mudanças que afetam contratos existentes são sinalizadas
+                        em destaque.
+                    </p>
+
+                    <h4>Abril/2026 — Tipagem numérica para <code>capacidade</code> e <code>unidade_de_medida</code></h4>
+                    <div class="alert alert-warning">
+                        <strong>Mudança incompatível parcial.</strong>
+                        Os campos <code>capacidade</code> e <code>unidade_de_medida</code> passam a
+                        ser <strong>numéricos</strong>. Antes, <code>capacidade</code> era texto livre
+                        (ex.: <code>"50 toneladas"</code>); essa forma agora é rejeitada com
+                        <code>HTTP 400</code>.
+                    </div>
+                    <ul>
+                        <li>
+                            <code>capacidade</code>: agora <strong>número</strong>
+                            (inteiro ou decimal, &ge; 0). Envie <code>50</code> em vez de
+                            <code>"50 toneladas"</code>.
+                        </li>
+                        <li>
+                            <code>unidade_de_medida</code>: agora <strong>inteiro de 1 a 17</strong>,
+                            vinculado ao dicionário oficial do APEX. Para "toneladas" use
+                            <code>16</code>; para "metros cúbicos" use <code>11</code>;
+                            consulte a tabela completa na seção <em>Dicionário de Campos Enumerados</em>
+                            acima.
+                        </li>
+                        <li>
+                            <strong>Retrocompatibilidade preservada para strings numéricas:</strong>
+                            a API ainda aceita valores enviados como string desde que sejam
+                            numericamente válidos — por exemplo <code>"50"</code> ou
+                            <code>"16"</code> são convertidos automaticamente.
+                            Apenas strings descritivas (<code>"50 toneladas"</code>) são rejeitadas.
+                        </li>
+                        <li>
+                            <strong>Validação reforçada:</strong> CNPJs com mais de 14 dígitos e
+                            <code>numero_registro_patrimonial</code> acima de 50 caracteres agora
+                            retornam <code>HTTP 400</code> com mensagem amigável (antes podiam
+                            cair em erro genérico do servidor).
+                        </li>
+                        <li>
+                            <strong>Ação recomendada para integradores:</strong> ajustar os
+                            clientes para enviar <code>capacidade</code> como número JSON puro
+                            e <code>unidade_de_medida</code> como inteiro do dicionário.
+                        </li>
+                    </ul>
+
+                    <h4>Março/2026 — Ferramenta web de importação em lote</h4>
+                    <ul>
+                        <li>
+                            Nova interface para importação de bens via planilha Excel:
+                            <a href="upload.html">upload.html</a>. Inclui geração do modelo
+                            oficial, controle de envio em lote (com pausa, retomada e
+                            cancelamento) e relatório linha-a-linha do resultado.
+                        </li>
+                        <li>
+                            <strong>Validações locais</strong> executadas no navegador antes do
+                            envio à API, reduzindo idas e voltas:
+                            <ul>
+                                <li>Combinação NCM (capítulo + posição + subposição) contra a tabela <code>SISPAT_SUBPOSICOES</code>;</li>
+                                <li>Conta contábil contra a tabela <code>SISPAT_CONTA_CONTABIL</code>;</li>
+                                <li>Código trigrama de porto contra a tabela <code>TB_PORTOS</code>.</li>
+                            </ul>
+                        </li>
+                        <li>Botão de exportação do contrato <strong>OpenAPI 3.0</strong> disponível na navbar da documentação, facilitando geração de SDKs e mocks.</li>
+                        <li>Link para o Manual de Inventário Patrimonial adicionado à navegação principal.</li>
+                        <li>Correções na documentação interativa: tipos JSON, campos obrigatórios, exemplos coerentes e detecção robusta do cabeçalho da planilha.</li>
+                    </ul>
+
+                    <h4>Março/2026 — Padronização dos endpoints de imagem</h4>
+                    <div class="alert alert-warning">
+                        <strong>Mudança incompatível.</strong>
+                        O campo <code>id_cadastro_de_bens</code> deixou de fazer parte do JSON de
+                        saída. A identificação pública de um bem é feita exclusivamente pelo par
+                        <code>cnpj</code> + <code>numero_registro_patrimonial</code>.
+                    </div>
+                    <ul>
+                        <li>Os endpoints <code>GET</code>, <code>PUT</code> e <code>POST</code> de imagem foram padronizados para o mesmo formato de URL e cabeçalhos.</li>
+                        <li>Removido o identificador interno do banco da resposta da API: clientes que dependiam de <code>id_cadastro_de_bens</code> devem migrar para a chave natural.</li>
+                        <li>Correções em exemplos da documentação para refletir o novo contrato.</li>
+                    </ul>
+
+                    <h4>Janeiro/2026 — Lançamento da v2.1.0</h4>
+                    <ul>
+                        <li>
+                            Novo endpoint <code>POST /sispat/imagem/</code> para upload de foto
+                            vinculada a um bem patrimonial.
+                            Tamanho máximo de 5 MB; formatos aceitos: JPEG, PNG, GIF, WebP, BMP.
+                        </li>
+                        <li>
+                            Documentação interativa publicada com Swagger UI integrado, exemplos
+                            de cURL/JavaScript/Python e dicionário completo de campos enumerados.
+                        </li>
+                        <li>Padronização da lista oficial de unidades de medida e descrições de bens patrimoniais.</li>
+                    </ul>
+
+                    <p style="margin-top: 25px; font-size: 13px; opacity: 0.85;">
+                        Para reportar incidentes, esclarecer dúvidas de integração ou solicitar
+                        funcionalidades, contate a equipe responsável pelo SisPAT em
+                        <a href="mailto:inventario@antaq.gov.br">inventario@antaq.gov.br</a>.
+                    </p>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div id="swagger-ui"></div>

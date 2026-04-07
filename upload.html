@@ -688,10 +688,10 @@
                 19: 'Equipamentos de Armazenagem', 20: 'Outros Equipamentos'
             },
             unidade_de_medida: {
-                1: 'Não Informado', 2: 'Caixa', 3: 'Coleção', 4: 'Conjunto',
-                5: 'Equipamento', 6: 'Jogo', 7: 'KG', 8: 'KM', 9: 'Litro',
-                10: 'M²', 11: 'M³', 12: 'Metro', 13: 'Par', 14: 'Parte',
-                15: 'Peça', 16: 'Tonelada', 17: 'Unidade'
+                1: 'Não definido', 2: 'Caixa', 3: 'Coleção', 4: 'Conjunto',
+                5: 'Equip.', 6: 'Jogo', 7: 'Kg', 8: 'Km', 9: 'Litro',
+                10: 'M2', 11: 'M3', 12: 'Metro', 13: 'Par', 14: 'Parte',
+                15: 'Peça', 16: 'Tonelada', 17: 'Unid.'
             },
             modalidade_exploracao: { 1: 'Autoridade Portuária', 2: 'Arrendatário' },
             depreciacao_especial: { 1: 'Sim', 2: 'Não' }
@@ -717,8 +717,8 @@
             especificacao_tecnica:       { label: 'Especificação Técnica', required: true, type: 'string', maxLength: 4000, example: 'Guindaste móvel sobre pneus, capacidade 50t', description: 'Especificação técnica detalhada' },
             cor:                         { label: 'Cor', required: false, type: 'string', example: 'Amarelo', description: 'Cor do bem' },
             fornecedor:                  { label: 'Fornecedor', required: false, type: 'string', example: 'Liebherr Brasil', description: 'Nome do fornecedor' },
-            capacidade:                  { label: 'Capacidade', required: false, type: 'string', example: '50 toneladas', description: 'Capacidade do bem' },
-            unidade_de_medida:           { label: 'Unidade de Medida', required: false, type: 'enum', enumMap: 'unidade_de_medida', example: '17 - Unidade', description: 'Unidade de medida' },
+            capacidade:                  { label: 'Capacidade', required: false, type: 'number', min: 0, example: 50, description: 'Capacidade do bem (valor numérico, expresso na unidade de medida)' },
+            unidade_de_medida:           { label: 'Unidade de Medida', required: false, type: 'enum', enumMap: 'unidade_de_medida', example: '16 - Tonelada', description: 'Unidade de medida do valor de capacidade' },
             latitude:                    { label: 'Latitude', required: true, type: 'number', min: -90, max: 90, example: -23.9618, description: 'Latitude WGS84 (-90 a 90)' },
             longitude:                   { label: 'Longitude', required: true, type: 'number', min: -180, max: 180, example: -46.3322, description: 'Longitude WGS84 (-180 a 180)' },
             destinacao:                  { label: 'Destinação', required: false, type: 'string', example: 'Operação portuária', description: 'Destinação do bem' },

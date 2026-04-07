@@ -45,7 +45,7 @@ info:
     O acesso ao SisPAT é realizado exclusivamente através do **Login Único Gov.BR**.
 
     **Ambiente de Produção:**
-    1. Acesse o SisPAT em [prd-apex.antaq.gov.br](https://prd-apex.antaq.gov.br) e clique em **"Entrar com Gov.BR"**
+    1. Acesse o SisPAT em [https://prd-apex.antaq.gov.br/ords/r/sfc/sispat/](https://prd-apex.antaq.gov.br/ords/r/sfc/sispat/) e clique em **"Entrar com Gov.BR"**
     2. Informe seu CPF e senha do Gov.BR
     3. Após autenticado, navegue até **"Gerenciador de API"**
     4. Gere uma nova credencial
@@ -63,7 +63,7 @@ info:
     6. Cadastre uma senha conforme as orientações demonstradas
     7. Informe um e-mail ou telefone celular para confirmação do cadastro
 
-    Após o cadastro, acesse o SisPAT Sandbox em [des-apex.antaq.gov.br](https://des-apex.antaq.gov.br) e clique em **"Entrar com Gov.BR"**. Navegue até **"Gerenciador de API"** e gere uma credencial de teste.
+    Após o cadastro, acesse o SisPAT Sandbox em [https://des-apex.antaq.gov.br/ords/r/sfc_dev/sispat/](https://des-apex.antaq.gov.br/ords/r/sfc_dev/sispat/) e clique em **"Entrar com Gov.BR"**. Navegue até **"Gerenciador de API"** e gere uma credencial de teste.
 
     > **Atenção:** A chave é pessoal e intransferível. Ela concede poderes de leitura e escrita nos dados da sua organização. Mantenha-a em sigilo absoluto.
 

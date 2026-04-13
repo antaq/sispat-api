@@ -288,7 +288,7 @@
     <div class="custom-header">
         <img src="https://prd-apex.antaq.gov.br/ords/r/sfc/files/static/v76/img/app-105-logo.png" alt="ANTAQ" onerror="this.style.display='none'">
         <div style="flex: 1;">
-            <h1>SISPAT - API de Bens Patrimoniais <span class="version-badge">v2.2.0</span></h1>
+            <h1>SISPAT - API de Bens Patrimoniais <span class="version-badge">v2.3.0</span></h1>
             <p>Agência Nacional de Transportes Aquaviários - ANTAQ</p>
         </div>
         <a href="upload.html" class="export-btn" title="Importar bens patrimoniais via planilha Excel" style="margin-right: 8px;">
@@ -616,7 +616,103 @@ Console.WriteLine(json);</code></pre>
             </div>
         </div>
 
-        <!-- Seção 5: Códigos de Resposta -->
+        <!-- Seção 5: Vinculação de Bens (Hierarquia Pai-Filho) -->
+        <div class="collapsible-section">
+            <div class="collapsible-header">Vinculação de Bens (Hierarquia Pai-Filho)</div>
+            <div class="collapsible-content">
+                <div class="collapsible-body">
+                    <p>
+                        O campo opcional <code>numero_registro_patrimonial_pai</code> permite vincular um bem acessório (filho)
+                        a um bem principal (pai). Isso é útil para bens como sensores, válvulas ou componentes que possuem
+                        registros patrimoniais próprios mas estão fisicamente vinculados a um bem maior (tanques, guindastes, etc.).
+                    </p>
+                    <p>
+                        A hierarquia é limitada a <strong>um único nível</strong> (pai &rarr; filho).
+                        Não é possível criar estruturas mais profundas (avô &rarr; pai &rarr; filho).
+                    </p>
+
+                    <h4>Regras de Validação</h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Regra</th>
+                                <th>Exemplo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td><strong>Não pode referenciar a si mesmo</strong> &mdash; o <code>numero_registro_patrimonial_pai</code> não pode ser igual ao <code>numero_registro_patrimonial</code> do próprio bem.</td>
+                                <td><code>PAT-001</code> não pode ser pai de <code>PAT-001</code>.</td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td><strong>Pai deve existir</strong> &mdash; o <code>numero_registro_patrimonial_pai</code> deve corresponder a um bem já cadastrado no mesmo CNPJ. O bem pai precisa ser criado antes do bem filho.</td>
+                                <td>Se <code>PAT-999</code> não existe, não pode ser referenciado como pai.</td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td><strong>Pai não pode ser filho de ninguém</strong> &mdash; o bem apontado como pai não pode possuir um <code>numero_registro_patrimonial_pai</code> preenchido. Isso garante apenas um nível de hierarquia, bloqueando a criação de "netos".</td>
+                                <td>Se <code>PAT-002</code> já é filho de <code>PAT-001</code>, então <code>PAT-002</code> não pode ser pai de <code>PAT-003</code>.</td>
+                            </tr>
+                            <tr>
+                                <td>4</td>
+                                <td><strong>Bem com filhos não pode virar filho</strong> &mdash; um bem que já é referenciado como pai por outros bens não pode receber um <code>numero_registro_patrimonial_pai</code>. Isso impede a criação de hierarquia multinível "por cima".</td>
+                                <td>Se <code>PAT-001</code> já tem filhos, não pode ser vinculado como filho de <code>PAT-010</code>.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Exemplo de uso</h4>
+                    <p>Cadastre primeiro o bem principal (pai) e depois o bem acessório (filho) referenciando o pai:</p>
+<pre><code>// 1. Primeiro, cadastre o bem principal (pai)
+PUT /sispat/bens/
+{
+    "cnpj": "04903587000108",
+    "numero_registro_patrimonial": "PAT-2024-0001",
+    "nome_item": "Guindaste portuário",
+    ...
+}
+
+// 2. Depois, cadastre o bem acessório (filho) vinculando ao pai
+PUT /sispat/bens/
+{
+    "cnpj": "04903587000108",
+    "numero_registro_patrimonial": "PAT-2024-0001-A",
+    "numero_registro_patrimonial_pai": "PAT-2024-0001",
+    "nome_item": "Sensor de carga do guindaste",
+    ...
+}</code></pre>
+
+                    <div class="alert alert-info">
+                        <strong>Nota:</strong> Na resposta do <span class="method-badge method-get" style="font-size: 11px;">GET</span>,
+                        o campo <code>numero_registro_patrimonial_pai</code> só aparece para bens que possuem um pai vinculado.
+                        Para bens sem vínculo, o campo é omitido (valor <code>null</code>).
+                    </div>
+
+                    <h4>Respostas de erro</h4>
+                    <p>Todas as violações das regras de hierarquia retornam <code>HTTP 422</code>:</p>
+<pre><code>// Auto-referência
+{"status": 422, "error": "VALIDATION_ERROR",
+ "message": "O bem não pode ser pai de si mesmo."}
+
+// Pai inexistente
+{"status": 422, "error": "VALIDATION_ERROR",
+ "message": "Bem pai não encontrado. O número de registro patrimonial \"PAT-999\" não existe para este CNPJ."}
+
+// Pai já é filho (tentativa de criar neto)
+{"status": 422, "error": "VALIDATION_ERROR",
+ "message": "O bem pai informado já é filho de outro bem. Apenas um nível de hierarquia é permitido (pai → filho)."}
+
+// Bem com filhos tentando virar filho
+{"status": 422, "error": "VALIDATION_ERROR",
+ "message": "Este bem já possui bens filhos vinculados. Um bem pai não pode ser vinculado como filho de outro bem."}</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção 6: Códigos de Resposta -->
         <div class="collapsible-section">
             <div class="collapsible-header">Códigos de Resposta HTTP</div>
             <div class="collapsible-content">
@@ -821,6 +917,25 @@ Console.WriteLine(json);</code></pre>
                         equipes de TI. Mudanças que afetam contratos existentes são sinalizadas
                         em destaque.
                     </p>
+
+                    <h4>Abril/2026 — Vinculação de bens (hierarquia pai-filho)</h4>
+                    <ul>
+                        <li>
+                            Novo campo opcional <code>numero_registro_patrimonial_pai</code> no
+                            <span class="method-badge method-put" style="font-size: 11px;">PUT</span> e
+                            <span class="method-badge method-get" style="font-size: 11px;">GET</span>
+                            para vincular bens acessórios (filhos) a um bem principal (pai).
+                        </li>
+                        <li>
+                            Hierarquia limitada a <strong>um único nível</strong> (pai &rarr; filho).
+                            Quatro regras de validação impedem auto-referência, pais inexistentes,
+                            criação de "netos" e transformação de pais existentes em filhos.
+                        </li>
+                        <li>
+                            <strong>Retrocompatível:</strong> o campo é opcional e nullable.
+                            Integrações existentes continuam funcionando sem alteração.
+                        </li>
+                    </ul>
 
                     <h4>Abril/2026 — Tipagem numérica para <code>capacidade</code> e <code>unidade_de_medida</code></h4>
                     <div class="alert alert-warning">

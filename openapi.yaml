@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: SISPAT - API de Bens Patrimoniais
-  version: 2.2.0
+  version: 2.3.0
   description: |
     # SISPAT - API de Bens Patrimoniais
 
@@ -278,6 +278,27 @@ paths:
         - bem_da_uniao, bem_reversivel, natureza
         - vinculacao_contratual, tipo_de_bem, grupo_de_bens, sigla_uf
 
+        ---
+
+        ### Vinculação de Bens (Hierarquia Pai-Filho)
+
+        O campo opcional `numero_registro_patrimonial_pai` permite vincular um bem acessório (filho) a um bem principal (pai).
+        Isso é útil para bens como sensores, válvulas ou componentes que possuem registros patrimoniais próprios mas estão
+        fisicamente vinculados a um bem maior (tanques, guindastes, etc.).
+
+        A hierarquia é limitada a **um único nível** (pai → filho). Não é possível criar estruturas mais profundas (avô → pai → filho).
+
+        **Regras de validação:**
+
+        | # | Regra | Exemplo |
+        |---|-------|---------|
+        | 1 | **Não pode referenciar a si mesmo** — o `numero_registro_patrimonial_pai` não pode ser igual ao `numero_registro_patrimonial` do próprio bem. | `PAT-001` não pode ser pai de `PAT-001`. |
+        | 2 | **Pai deve existir** — o `numero_registro_patrimonial_pai` deve corresponder a um bem já cadastrado no mesmo CNPJ. O bem pai precisa ser criado antes do bem filho. | Se `PAT-999` não existe, não pode ser referenciado como pai. |
+        | 3 | **Pai não pode ser filho de ninguém** — o bem apontado como pai não pode possuir um `numero_registro_patrimonial_pai` preenchido. Isso garante apenas um nível de hierarquia, bloqueando a criação de "netos". | Se `PAT-002` já é filho de `PAT-001`, então `PAT-002` não pode ser pai de `PAT-003`. |
+        | 4 | **Bem com filhos não pode virar filho** — um bem que já é referenciado como pai por outros bens não pode receber um `numero_registro_patrimonial_pai`. Isso impede a criação de hierarquia multinível "por cima". | Se `PAT-001` já tem filhos, não pode ser vinculado como filho de `PAT-010`. |
+
+        ---
+
         **Nota:** Certifique-se de usar a chave correspondente ao ambiente desejado.
         Dados enviados para `sispat_test_` não afetam a base oficial.
       requestBody:
@@ -326,6 +347,41 @@ paths:
                   vinculacao_contratual: 2
                   tipo_de_bem: 5
                   grupo_de_bens: 4
+                  sigla_uf: "SP"
+              exemploBemFilho:
+                summary: Exemplo de bem filho (vinculado a um bem pai)
+                value:
+                  cnpj: 4903587000108
+                  numero_registro_patrimonial: "PAT-2024-0001-A"
+                  numero_registro_patrimonial_pai: "PAT-2024-0001"
+                  numero_do_contrato: "CT-2024-001"
+                  cod_trigrama: "GND"
+                  capitulo: 84
+                  posicao: 8427
+                  subposicao: 842710
+                  nome_item: "Sensor de carga do guindaste portuário"
+                  especificacao_tecnica: "Sensor de carga eletrônico. Capacidade: 200t. Precisão: 0.1%."
+                  latitude: -23.9618
+                  longitude: -46.3322
+                  modalidade_de_tombamento: 1
+                  data_de_tombamento: "2024-03-15"
+                  valor_original_de_compra: 45000.00
+                  fonte_de_recurso: 1
+                  valor_justo_de_mercado: 42000.00
+                  valor_residual: 5000.00
+                  vida_util_anos: 10
+                  taxa_depreciacao: 10.00
+                  data_de_avaliacao: "2024-06-01"
+                  conta_contabil: "10.1.2.01"
+                  historico: 1
+                  situacao: 1
+                  estado_de_conservacao: 2
+                  bem_da_uniao: 2
+                  bem_reversivel: 1
+                  natureza: 1
+                  vinculacao_contratual: 1
+                  tipo_de_bem: 4
+                  grupo_de_bens: 6
                   sigla_uf: "SP"
               exemploTeste:
                 summary: Exemplo para Ambiente de Teste
@@ -459,6 +515,24 @@ paths:
                     error: "Unprocessable Entity"
                     code: "VALIDATION_ERROR"
                     message: "Dados inválidos para processamento"
+                paiInexistente:
+                  summary: Bem pai não encontrado
+                  value:
+                    status: 422
+                    error: "VALIDATION_ERROR"
+                    message: "Bem pai não encontrado. O numero_registro_patrimonial_pai informado não existe para este CNPJ."
+                hierarquiaNeto:
+                  summary: Pai já é filho de outro bem
+                  value:
+                    status: 422
+                    error: "VALIDATION_ERROR"
+                    message: "Hierarquia inválida: o bem pai informado já é filho de outro bem. Apenas um nível de hierarquia é permitido (pai -> filho)."
+                paiComFilhos:
+                  summary: Bem com filhos não pode virar filho
+                  value:
+                    status: 422
+                    error: "VALIDATION_ERROR"
+                    message: "Hierarquia inválida: este bem já possui bens filhos vinculados. Um bem pai não pode ser vinculado como filho de outro bem."
         '500':
           description: Erro interno no servidor.
           content:
@@ -990,6 +1064,22 @@ components:
             Justificativa para depreciação especial.
             **Obrigatório quando depreciacao_especial = 1 (Sim).**
           example: "Bem com vida útil reduzida devido ao uso intensivo."
+        numero_registro_patrimonial_pai:
+          type: string
+          maxLength: 50
+          nullable: true
+          description: |
+            Número de registro patrimonial do bem pai ao qual este bem está vinculado (opcional).
+            Utilizado para vincular bens acessórios (filhos) a um bem principal (pai).
+
+            **Regras de validação:**
+            - O bem pai deve existir e pertencer ao mesmo CNPJ.
+            - Não pode referenciar a si mesmo.
+            - O bem pai não pode ser filho de outro bem (apenas um nível de hierarquia: pai → filho).
+            - Um bem que já possui filhos vinculados não pode ser vinculado como filho de outro bem.
+
+            Retorna `null` quando o bem não está vinculado a nenhum outro.
+          example: "PAT-2024-0001"
 
     BemPatrimonialInput:
       type: object
@@ -1356,6 +1446,20 @@ components:
           maxLength: 4000
           description: Justificativa para depreciação especial (opcional, obrigatório se depreciacao_especial = 1).
           example: "Bem com vida útil reduzida devido ao uso intensivo em ambiente corrosivo."
+        numero_registro_patrimonial_pai:
+          type: string
+          maxLength: 50
+          nullable: true
+          description: |
+            Número de registro patrimonial do bem pai (opcional).
+            Vincule bens acessórios a um bem principal informando aqui o `numero_registro_patrimonial` do pai.
+
+            **Regras:**
+            - O bem pai deve existir previamente (mesmo CNPJ).
+            - Não pode referenciar a si mesmo.
+            - O bem pai não pode ser filho de outro bem (hierarquia máxima: pai → filho).
+            - Um bem que já possui filhos não pode ser vinculado como filho.
+          example: "PAT-2024-0001"
 
     ImagemUploadResponse:
       type: object

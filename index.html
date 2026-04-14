@@ -891,6 +891,10 @@ PUT /sispat/bens/
                         <tr><td>15</td><td>Peça</td></tr>
                         <tr><td>16</td><td>Tonelada</td></tr>
                         <tr><td>17</td><td>Unid.</td></tr>
+                        <tr><td>18</td><td>Tonelada/hora (transportadores, elevadores de caneca)</td></tr>
+                        <tr><td>19</td><td>kVA (transformadores elétricos)</td></tr>
+                        <tr><td>20</td><td>m³/hora (bombas centrífugas)</td></tr>
+                        <tr><td>21</td><td>CV (motores elétricos)</td></tr>
                     </table>
 
                     <h4>Campos binários (1=Sim, 2=Não)</h4>
@@ -917,6 +921,29 @@ PUT /sispat/bens/
                         equipes de TI. Mudanças que afetam contratos existentes são sinalizadas
                         em destaque.
                     </p>
+
+                    <h4>Abril/2026 — Novas unidades de medida (equipamentos portuários)</h4>
+                    <ul>
+                        <li>
+                            Adicionados quatro códigos ao dicionário <code>unidade_de_medida</code>
+                            para atender equipamentos típicos do setor portuário:
+                            <ul>
+                                <li><code>18</code> — Tonelada/hora (transportadores e elevadores de caneca);</li>
+                                <li><code>19</code> — kVA (transformadores elétricos);</li>
+                                <li><code>20</code> — m³/hora (bombas centrífugas);</li>
+                                <li><code>21</code> — CV (motores elétricos).</li>
+                            </ul>
+                        </li>
+                        <li>
+                            Faixa aceita pela API passa de <code>1..17</code> para
+                            <code>1..21</code>. A lista completa está na seção
+                            <em>Dicionário de Campos Enumerados</em> acima.
+                        </li>
+                        <li>
+                            <strong>Retrocompatível:</strong> os códigos anteriores (1–17) permanecem
+                            inalterados. Integrações existentes continuam funcionando sem ajuste.
+                        </li>
+                    </ul>
 
                     <h4>Abril/2026 — Vinculação de bens (hierarquia pai-filho)</h4>
                     <ul>

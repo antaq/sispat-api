@@ -4,3 +4,6 @@
 uploads/
 bruno/
 docs/
+sql/
+.venv/
+__pycache__/

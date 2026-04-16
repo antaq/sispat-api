@@ -51,6 +51,65 @@
         }
         .header-btn:hover { background: rgba(255,255,255,0.25); }
 
+        /* Dropdown SisPAT */
+        .dropdown-sispat {
+            position: relative;
+            display: inline-block;
+        }
+        .dropdown-sispat-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255,255,255,0.15);
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            border: 1px solid rgba(255,255,255,0.3);
+            transition: background 0.2s;
+            white-space: nowrap;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: inherit;
+        }
+        .dropdown-sispat-btn:hover { background: rgba(255,255,255,0.25); }
+        .dropdown-sispat-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: calc(100% + 6px);
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+            min-width: 240px;
+            z-index: 1000;
+            overflow: hidden;
+        }
+        .dropdown-sispat.open .dropdown-sispat-menu { display: block; }
+        .dropdown-sispat-menu a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            color: #1351b4;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.15s;
+        }
+        .dropdown-sispat-menu a:hover { background: #f0f4ff; }
+        .dropdown-sispat-menu a .env-badge {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+            margin-left: auto;
+        }
+        .dropdown-sispat-menu a .env-badge.prod { background: #d4edda; color: #155724; }
+        .dropdown-sispat-menu a .env-badge.hmg { background: #fff3cd; color: #856404; }
+        .dropdown-sispat-menu hr { margin: 0; border: none; border-top: 1px solid #e9ecef; }
+
         /* Footer */
         .custom-footer {
             background: #071d41;
@@ -443,6 +502,26 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
             Manual de Inventário
         </a>
+        <div class="dropdown-sispat">
+            <button class="dropdown-sispat-btn" onclick="this.parentElement.classList.toggle('open')" title="Acessar o sistema SisPAT">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                Acessar SisPAT
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="dropdown-sispat-menu">
+                <a href="https://prd-apex.antaq.gov.br/ords/r/sfc/sispat/" target="_blank" rel="noopener noreferrer">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    Produção
+                    <span class="env-badge prod">PRD</span>
+                </a>
+                <hr>
+                <a href="https://des-apex.antaq.gov.br/ords/r/sfc_dev/sispat/" target="_blank" rel="noopener noreferrer">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                    Homologação (Sandbox)
+                    <span class="env-badge hmg">HMG</span>
+                </a>
+            </div>
+        </div>
     </div>
 
     <div class="container">
@@ -604,6 +683,14 @@
     <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 
+    <script>
+    // Fecha dropdown ao clicar fora
+    document.addEventListener('click', function(e) {
+        document.querySelectorAll('.dropdown-sispat.open').forEach(function(d) {
+            if (!d.contains(e.target)) d.classList.remove('open');
+        });
+    });
+    </script>
     <script>
     (function() {
         'use strict';

@@ -5,5 +5,9 @@ uploads/
 bruno/
 docs/
 sql/
+data/
+rest/
+funcoes/
+ddl/
 .venv/
 __pycache__/

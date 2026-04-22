@@ -400,7 +400,7 @@
 
         <!-- Seção 0: Como Obter sua API Key -->
         <div class="collapsible-section">
-            <div class="collapsible-header">Como Obter sua API Key</div>
+            <div class="collapsible-header">Autenticação e Segurança</div>
             <div class="collapsible-content">
                 <div class="collapsible-body">
                     <p>O acesso ao SisPAT é realizado exclusivamente através do <strong>Login Único Gov.BR</strong>.</p>
@@ -434,6 +434,40 @@
                     <div class="alert alert-warning">
                         <strong>Atenção:</strong> A chave é pessoal e intransferível. Ela concede poderes de leitura e escrita nos dados da sua organização. Mantenha-a em sigilo absoluto.
                     </div>
+
+                    <h4>Acesso para Empresas de Tecnologia</h4>
+                    <p>
+                        Empresas de tecnologia interessadas em desenvolver soluções integradas ao SisPAT podem solicitar
+                        acesso ao ambiente de homologação (Sandbox) para estudar e testar a API.
+                    </p>
+                    <p>
+                        Para isso, envie um e-mail para <a href="mailto:inventario@antaq.gov.br">inventario@antaq.gov.br</a>
+                        com as seguintes informações do representante responsável:
+                    </p>
+                    <ul>
+                        <li>Nome completo</li>
+                        <li>CPF</li>
+                        <li>E-mail corporativo</li>
+                        <li>CNPJ da empresa</li>
+                    </ul>
+                    <div class="alert alert-info">
+                        <strong>Nota:</strong> O acesso concedido é restrito ao ambiente de Sandbox e vinculado ao CNPJ da empresa de tecnologia. Não há acesso aos dados de produção das entidades reguladas.
+                    </div>
+
+                    <h4>Controles de Segurança</h4>
+                    <table>
+                        <thead>
+                            <tr><th>Controle</th><th>Implementação</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Transporte seguro</td><td>HTTPS obrigatório em todos os endpoints; HTTP rejeitado</td></tr>
+                            <tr><td>Autenticação</td><td>API Key individual por empresa, vinculada ao CNPJ</td></tr>
+                            <tr><td>Autorização</td><td>Chave só opera sobre dados do CNPJ ao qual está vinculada</td></tr>
+                            <tr><td>Isolamento de ambientes</td><td>Produção e Sandbox com chaves e bases de dados separadas</td></tr>
+                            <tr><td>Rotação de credenciais</td><td>API Keys podem ser revogadas e recriadas a qualquer momento</td></tr>
+                            <tr><td>Rastreabilidade</td><td>Todas as operações de escrita são registradas com log estruturado</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

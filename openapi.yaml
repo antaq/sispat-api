@@ -137,6 +137,19 @@ info:
 
     ---
 
+    ## Segurança
+
+    | Controle | Implementação |
+    |----------|---------------|
+    | Transporte seguro | HTTPS obrigatório em todos os endpoints; HTTP rejeitado |
+    | Autenticação | API Key individual por empresa, vinculada ao CNPJ |
+    | Autorização | Chave só opera sobre dados do CNPJ ao qual está vinculada |
+    | Isolamento de ambientes | Produção e Sandbox com chaves e bases de dados separadas |
+    | Rotação de credenciais | API Keys podem ser revogadas e recriadas a qualquer momento |
+    | Rastreabilidade | Todas as operações de escrita são registradas com log estruturado |
+
+    ---
+
     ## Suporte
 
     - **Site institucional:** [ANTAQ](https://www.gov.br/antaq/pt-br)

@@ -76,6 +76,7 @@
             display: flex;
             align-items: center;
             gap: 20px;
+            flex-wrap: wrap;
         }
         .custom-header img {
             height: 60px;
@@ -89,6 +90,21 @@
             margin: 5px 0 0 0;
             opacity: 0.9;
             font-size: 14px;
+        }
+        @media (max-width: 768px) {
+            .custom-header {
+                padding: 15px 20px;
+                gap: 10px;
+            }
+            .custom-header img { height: 44px; }
+            .custom-header h1 { font-size: 18px; }
+            .custom-header p { font-size: 12px; }
+            .custom-header .export-btn,
+            .custom-header .dropdown-sispat-btn {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+            .integration-guide { padding: 16px 20px; }
         }
         /* Ajuste do info block */
         .swagger-ui .info {

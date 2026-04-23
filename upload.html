@@ -474,7 +474,15 @@
 
         /* Responsive */
         @media (max-width: 768px) {
-            .custom-header { padding: 15px 20px; flex-wrap: wrap; }
+            .custom-header { padding: 15px 20px; flex-wrap: wrap; gap: 10px; }
+            .custom-header img { height: 44px; }
+            .custom-header h1 { font-size: 18px; }
+            .custom-header p { font-size: 12px; }
+            .custom-header .header-btn,
+            .custom-header .dropdown-sispat-btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
             .container { padding: 15px 20px; }
             .config-row { flex-direction: column; align-items: flex-start; }
             .api-key-wrapper { max-width: 100%; width: 100%; }

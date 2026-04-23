@@ -768,8 +768,9 @@
                 <button class="video-modal-close" onclick="closeVideoModal()" aria-label="Fechar">&times;</button>
             </div>
             <div class="video-modal-body">
-                <video id="tutorialVideo" controls muted playsinline preload="metadata">
-                    <source src="tutorial-envio-planilha.webm" type="video/webm">
+                <video id="tutorialVideo" controls muted playsinline preload="metadata"
+                       data-src-desktop="tutorial-envio-planilha.webm"
+                       data-src-mobile="tutorial-envio-planilha-vertical.webm">
                     Seu navegador não suporta reprodução deste vídeo.
                 </video>
             </div>
@@ -817,6 +818,11 @@
     function openVideoModal() {
         var modal = document.getElementById('videoModal');
         var video = document.getElementById('tutorialVideo');
+        var isMobile = window.matchMedia('(max-width: 768px)').matches;
+        var desiredSrc = isMobile ? video.dataset.srcMobile : video.dataset.srcDesktop;
+        if (!video.src || video.src.indexOf(desiredSrc) === -1) {
+            video.src = desiredSrc;
+        }
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
         try { video.currentTime = 0; } catch (e) { /* ignore */ }

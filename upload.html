@@ -484,6 +484,103 @@
 
         /* Hidden */
         .hidden { display: none !important; }
+
+        /* Botão de vídeo tutorial */
+        .btn-video {
+            background: #e8f0fe;
+            color: #1351b4;
+            border: 2px solid #1351b4;
+        }
+        .btn-video:hover { background: #1351b4; color: white; }
+        .btn-video .play-dot {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            background: #c0392b;
+            color: white;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        /* Modal de vídeo tutorial */
+        .video-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 2vh 2vw;
+        }
+        .video-modal-overlay.active { display: flex; }
+        .video-modal-content {
+            position: relative;
+            width: 95vw;
+            max-width: 1600px;
+            max-height: 96vh;
+            display: flex;
+            flex-direction: column;
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        .video-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #071d41;
+            color: white;
+            padding: 12px 20px;
+            gap: 16px;
+        }
+        .video-modal-title {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .video-modal-hint {
+            font-size: 12px;
+            font-weight: 400;
+            opacity: 0.85;
+            background: rgba(255,255,255,0.12);
+            padding: 3px 10px;
+            border-radius: 12px;
+            white-space: nowrap;
+        }
+        .video-modal-close {
+            background: transparent;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 2px 10px;
+            font-size: 28px;
+            line-height: 1;
+            border-radius: 4px;
+        }
+        .video-modal-close:hover { background: rgba(255,255,255,0.15); }
+        .video-modal-body {
+            background: #000;
+            flex: 1;
+            display: flex;
+            min-height: 0;
+        }
+        .video-modal-body video {
+            width: 100%;
+            max-height: calc(96vh - 56px);
+            display: block;
+            object-fit: contain;
+        }
+        @media (max-width: 768px) {
+            .video-modal-hint { display: none; }
+            .video-modal-title { font-size: 14px; }
+        }
     </style>
 </head>
 <body>
@@ -535,6 +632,12 @@
                 <button class="btn btn-primary" id="btnDownloadTemplate" onclick="TemplateGenerator.generate()">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     Baixar Modelo Excel
+                </button>
+                <button type="button" class="btn btn-video" onclick="openVideoModal()" title="Assistir ao tutorial de envio por planilha">
+                    <span class="play-dot">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="6 4 20 12 6 20"/></svg>
+                    </span>
+                    Assistir Tutorial
                 </button>
                 <a href="index.html" class="btn btn-outline">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
@@ -654,6 +757,25 @@
         </div>
     </div>
 
+    <!-- VIDEO TUTORIAL MODAL -->
+    <div class="video-modal-overlay" id="videoModal" role="dialog" aria-modal="true" aria-labelledby="videoModalTitle">
+        <div class="video-modal-content">
+            <div class="video-modal-header">
+                <h3 class="video-modal-title" id="videoModalTitle">
+                    Tutorial: Envio de bens via planilha
+                    <span class="video-modal-hint">Vídeo sem áudio — clique no <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg> nos controles para ativar o som</span>
+                </h3>
+                <button class="video-modal-close" onclick="closeVideoModal()" aria-label="Fechar">&times;</button>
+            </div>
+            <div class="video-modal-body">
+                <video id="tutorialVideo" controls muted playsinline preload="metadata">
+                    <source src="tutorial-envio-planilha.webm" type="video/webm">
+                    Seu navegador não suporta reprodução deste vídeo.
+                </video>
+            </div>
+        </div>
+    </div>
+
     <!-- CONFIRMATION MODAL -->
     <div class="modal-overlay" id="confirmModal">
         <div class="modal">
@@ -689,6 +811,36 @@
         document.querySelectorAll('.dropdown-sispat.open').forEach(function(d) {
             if (!d.contains(e.target)) d.classList.remove('open');
         });
+    });
+
+    // Modal de vídeo tutorial
+    function openVideoModal() {
+        var modal = document.getElementById('videoModal');
+        var video = document.getElementById('tutorialVideo');
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        try { video.currentTime = 0; } catch (e) { /* ignore */ }
+        video.muted = true;
+        var p = video.play();
+        if (p && typeof p.catch === 'function') {
+            p.catch(function() { /* autoplay bloqueado: usuário usa controles */ });
+        }
+    }
+    function closeVideoModal() {
+        var modal = document.getElementById('videoModal');
+        var video = document.getElementById('tutorialVideo');
+        video.pause();
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+    document.getElementById('videoModal').addEventListener('click', function(e) {
+        if (e.target === this) closeVideoModal();
+    });
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            var modal = document.getElementById('videoModal');
+            if (modal && modal.classList.contains('active')) closeVideoModal();
+        }
     });
     </script>
     <script>

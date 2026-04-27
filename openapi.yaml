@@ -989,10 +989,11 @@ components:
             - 2: Bens da União - Operação
             - 3: Bens da União - Terceiros
             - 4: Bens de Terceiros
-            - 5: Bens Próprios - Administração
-            - 6: Bens Próprios - Operação
+            - 5: Bens da Administração
+            - 6: Bens em Operação
             - 7: Imobilizado em Andamento
-          enum: [1, 2, 3, 4, 5, 6, 7]
+            - 8: Benfeitorias úteis em Bens de Terceiros
+          enum: [1, 2, 3, 4, 5, 6, 7, 8]
           example: 5
         grupo_de_bens:
           type: integer
@@ -1399,10 +1400,11 @@ components:
             - 2: Bens da União - Operação
             - 3: Bens da União - Terceiros
             - 4: Bens de Terceiros
-            - 5: Bens Próprios - Administração
-            - 6: Bens Próprios - Operação
+            - 5: Bens da Administração
+            - 6: Bens em Operação
             - 7: Imobilizado em Andamento
-          enum: [1, 2, 3, 4, 5, 6, 7]
+            - 8: Benfeitorias úteis em Bens de Terceiros
+          enum: [1, 2, 3, 4, 5, 6, 7, 8]
           example: 5
         grupo_de_bens:
           type: integer

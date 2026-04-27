@@ -1104,9 +1104,10 @@ PUT /sispat/bens/
                         <tr><td>2</td><td>Bens da União - Operação</td></tr>
                         <tr><td>3</td><td>Bens da União - Terceiros</td></tr>
                         <tr><td>4</td><td>Bens de Terceiros</td></tr>
-                        <tr><td>5</td><td>Bens Próprios - Administração</td></tr>
-                        <tr><td>6</td><td>Bens Próprios - Operação</td></tr>
+                        <tr><td>5</td><td>Bens da Administração</td></tr>
+                        <tr><td>6</td><td>Bens em Operação</td></tr>
                         <tr><td>7</td><td>Imobilizado em Andamento</td></tr>
+                        <tr><td>8</td><td>Benfeitorias úteis em Bens de Terceiros</td></tr>
                     </table>
 
                     <h4>unidade_de_medida</h4>
@@ -1159,6 +1160,35 @@ PUT /sispat/bens/
                         equipes de TI. Mudanças que afetam contratos existentes são sinalizadas
                         em destaque.
                     </p>
+
+                    <h4>Abril/2026 — Atualização do dicionário <code>tipo_de_bem</code> (alinhamento ao SICRASP/2022)</h4>
+                    <ul>
+                        <li>
+                            Novo valor adicionado ao dicionário <code>tipo_de_bem</code>:
+                            <ul>
+                                <li><code>8</code> — Benfeitorias úteis em Bens de Terceiros.</li>
+                            </ul>
+                        </li>
+                        <li>
+                            Renomeação de rótulos (os <strong>códigos numéricos foram preservados</strong>;
+                            só o texto descritivo mudou):
+                            <ul>
+                                <li><code>5</code>: <em>Bens Próprios - Administração</em> &rarr; <strong>Bens da Administração</strong>;</li>
+                                <li><code>6</code>: <em>Bens Próprios - Operação</em> &rarr; <strong>Bens em Operação</strong>.</li>
+                            </ul>
+                        </li>
+                        <li>
+                            Faixa aceita pela API passa de <code>1..7</code> para <code>1..8</code>.
+                            A lista completa está na seção <em>Dicionário de Campos Enumerados</em> acima.
+                        </li>
+                        <li>
+                            <strong>Retrocompatível:</strong> bens já cadastrados com os códigos
+                            <code>5</code> e <code>6</code> permanecem válidos sem necessidade de
+                            atualização — apenas a interpretação textual do código mudou, em
+                            alinhamento à estrutura do imobilizado adotada pelo SICRASP a partir
+                            de 2022. Integrações existentes continuam funcionando sem ajuste.
+                        </li>
+                    </ul>
 
                     <h4>Abril/2026 — Novas unidades de medida (equipamentos portuários)</h4>
                     <ul>

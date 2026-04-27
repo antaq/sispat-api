@@ -926,8 +926,9 @@
             tipo_de_bem: {
                 1: 'Bens da União - Administração', 2: 'Bens da União - Operação',
                 3: 'Bens da União - Terceiros', 4: 'Bens de Terceiros',
-                5: 'Bens Próprios - Administração', 6: 'Bens Próprios - Operação',
-                7: 'Imobilizado em Andamento'
+                5: 'Bens da Administração', 6: 'Bens em Operação',
+                7: 'Imobilizado em Andamento',
+                8: 'Benfeitorias úteis em Bens de Terceiros'
             },
             grupo_de_bens: {
                 1: 'Terrenos', 2: 'Edifícios e Benfeitorias', 3: 'Instalações',
@@ -993,7 +994,7 @@
             bem_reversivel:              { label: 'Bem Reversível', required: true, type: 'enum', enumMap: 'bem_reversivel', example: '1 - Sim', description: 'É bem reversível?' },
             natureza:                    { label: 'Natureza', required: true, type: 'enum', enumMap: 'natureza', example: '1 - Móvel', description: 'Natureza do bem' },
             vinculacao_contratual:       { label: 'Vinculação Contratual', required: true, type: 'enum', enumMap: 'vinculacao_contratual', example: '2 - Não Removível', description: 'Tipo de vinculação contratual' },
-            tipo_de_bem:                 { label: 'Tipo de Bem', required: true, type: 'enum', enumMap: 'tipo_de_bem', example: '5 - Bens Próprios - Administração', description: 'Tipo do bem' },
+            tipo_de_bem:                 { label: 'Tipo de Bem', required: true, type: 'enum', enumMap: 'tipo_de_bem', example: '5 - Bens da Administração', description: 'Tipo do bem' },
             grupo_de_bens:               { label: 'Grupo de Bens', required: true, type: 'enum', enumMap: 'grupo_de_bens', example: '4 - Máquinas', description: 'Grupo de bens patrimoniais' },
             sigla_uf:                    { label: 'UF', required: true, type: 'uf', example: 'SP', description: 'Sigla da UF (2 caracteres)' },
             tempo_de_utilizacao:         { label: 'Tempo de Utilização (Anos)', required: false, type: 'integer', min: 0, example: 5, description: 'Tempo acumulado de uso em anos' },

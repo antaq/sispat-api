@@ -1331,9 +1331,9 @@
 
                 // Date normalization
                 if (def.type === 'date') {
-                    // Excel serial number
-                    if (typeof cellValue === 'number' && cellValue > 30000 && cellValue < 100000) {
-                        var date = new Date((cellValue - 25569) * 86400 * 1000);
+                    // Excel serial number (1 = 1900-01-01, ~100000 ≈ year 2173)
+                    if (typeof cellValue === 'number' && cellValue > 0 && cellValue < 100000) {
+                        var date = new Date(Math.round((cellValue - 25569) * 86400 * 1000));
                         return date.toISOString().split('T')[0];
                     }
                     // Already a string, try to normalize

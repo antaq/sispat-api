@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: SISPAT - API de Bens Patrimoniais
-  version: 2.3.0
+  version: 2.4.0
   description: |
     # SISPAT - API de Bens Patrimoniais
 
@@ -171,6 +171,13 @@ tags:
     description: Operações de consulta, criação e atualização de bens patrimoniais.
   - name: Imagens
     description: Upload e gerenciamento de imagens dos bens patrimoniais.
+  - name: Comprovantes
+    description: |
+      Consulta de comprovantes anuais de envio do inventário e emissão do
+      documento (HTML imprimível / print-to-PDF). Há **um comprovante por
+      exercício** por empresa, consolidado automaticamente a cada envio; o
+      número de protocolo (ex.: `SISPAT-PRD-2026-000123-47`) é fixado no
+      primeiro envio do exercício e não muda.
 security:
   - ApiKeyAuth: []
 paths:
@@ -350,7 +357,7 @@ paths:
                   vida_util_anos: 20
                   taxa_depreciacao: 5.00
                   data_de_avaliacao: "2024-01-15"
-                  conta_contabil: "10.1.2.01"
+                  conta_contabil: "1.2.3.01.02.001"
                   historico: 1
                   situacao: 1
                   estado_de_conservacao: 3
@@ -385,7 +392,7 @@ paths:
                   vida_util_anos: 10
                   taxa_depreciacao: 10.00
                   data_de_avaliacao: "2024-06-01"
-                  conta_contabil: "10.1.2.01"
+                  conta_contabil: "1.2.3.01.02.001"
                   historico: 1
                   situacao: 1
                   estado_de_conservacao: 2
@@ -430,7 +437,7 @@ paths:
                   vinculacao_contratual: 2
                   tipo_de_bem: 5
                   grupo_de_bens: 4
-                  conta_contabil: "10.1.2.01"
+                  conta_contabil: "1.2.3.01.02.001"
                   data_de_avaliacao: "2025-01-01"
                   valor_justo_de_mercado: 140000.00
                   valor_residual: 10000.00
@@ -712,6 +719,147 @@ paths:
                     status: 404
                     error: "VALIDATION_ERROR"
                     message: "Bem patrimonial não encontrado. Cadastre o bem antes de enviar a imagem."
+        '500':
+          description: Erro interno no servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroPadrao'
+
+  /comprovantes:
+    get:
+      tags:
+        - Comprovantes
+      summary: Listar comprovantes de envio
+      description: |
+        Lista os comprovantes anuais de envio (1 por exercício) da empresa
+        vinculada à API Key, no ambiente correspondente ao servidor.
+        Paginação nativa do ORDS. Ordenado por exercício (mais recente primeiro).
+      operationId: listarComprovantes
+      parameters:
+        - name: offset
+          in: query
+          required: false
+          description: Índice do primeiro registro a retornar (baseado em zero).
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: exercicio
+          in: query
+          required: false
+          description: Filtra por exercício (ano YYYY).
+          schema:
+            type: integer
+            example: 2026
+      responses:
+        '200':
+          description: Lista de comprovantes retornada com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListaComprovantesResponse'
+        '400':
+          description: Parâmetro inválido (por exemplo, exercício não numérico).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroPadrao'
+        '401':
+          description: Falha de autenticação (API Key ausente ou inválida).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroPadrao'
+        '500':
+          description: Erro interno no servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroPadrao'
+
+  /comprovantes/{numero_protocolo}:
+    get:
+      tags:
+        - Comprovantes
+      summary: Detalhar comprovante de envio
+      description: |
+        Retorna o detalhe de um comprovante pelo número de protocolo.
+        Só retorna comprovantes da empresa vinculada à API Key (caso contrário,
+        404). Os CPFs são mascarados nesta resposta (LGPD); o valor integral
+        aparece apenas no documento.
+      operationId: detalharComprovante
+      parameters:
+        - name: numero_protocolo
+          in: path
+          required: true
+          description: Número do protocolo do comprovante.
+          schema:
+            type: string
+          example: "SISPAT-PRD-2026-000123-47"
+      responses:
+        '200':
+          description: Comprovante encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComprovanteEnvio'
+        '401':
+          description: Falha de autenticação (API Key ausente ou inválida).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroPadrao'
+        '404':
+          description: Comprovante não encontrado para o protocolo informado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroPadrao'
+        '500':
+          description: Erro interno no servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroPadrao'
+
+  /comprovantes/{numero_protocolo}/documento:
+    get:
+      tags:
+        - Comprovantes
+      summary: Documento do comprovante (HTML imprimível)
+      description: |
+        Retorna o documento do comprovante em HTML autossuficiente e imprimível
+        (use **Imprimir → Salvar como PDF** no navegador). Content-Type
+        `text/html; charset=UTF-8`.
+      operationId: documentoComprovante
+      parameters:
+        - name: numero_protocolo
+          in: path
+          required: true
+          description: Número do protocolo do comprovante.
+          schema:
+            type: string
+          example: "SISPAT-PRD-2026-000123-47"
+      responses:
+        '200':
+          description: Documento HTML do comprovante.
+          content:
+            text/html:
+              schema:
+                type: string
+        '401':
+          description: Falha de autenticação (API Key ausente ou inválida).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroPadrao'
+        '404':
+          description: Comprovante não encontrado para o protocolo informado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroPadrao'
         '500':
           description: Erro interno no servidor.
           content:
@@ -1041,7 +1189,7 @@ components:
         conta_contabil:
           type: string
           description: Conta contábil.
-          example: "1.2.3.1.1.01.01"
+          example: "1.2.3.01.02.001"
         valor_residual:
           type: string
           description: Valor residual.
@@ -1058,7 +1206,7 @@ components:
         conta_contabil_depreciacao:
           type: string
           description: Conta contábil da despesa de depreciação.
-          example: "2.1.1.01.01"
+          example: "6.3.1.01"
         depreciacao_anual:
           type: number
           format: double
@@ -1324,7 +1472,7 @@ components:
         conta_contabil:
           type: string
           description: Conta contábil.
-          example: "1.2.3.1.1.01.01"
+          example: "1.2.3.01.02.001"
         historico:
           type: integer
           description: |
@@ -1452,7 +1600,7 @@ components:
           type: string
           maxLength: 50
           description: Conta contábil da despesa de depreciação (opcional).
-          example: "2.1.1.01.01"
+          example: "6.3.1.01"
         # NOTA: O campo depreciacao_anual é CALCULADO automaticamente pelo sistema
         # usando a fórmula: ((valor_original - valor_residual) / vida_util_anos) * (taxa_depreciacao / 100)
         # Por isso não é aceito como entrada, mas é retornado nas respostas GET e PUT.
@@ -1541,7 +1689,152 @@ components:
             - Atualizado
           example: "Criado"
         data:
-          $ref: '#/components/schemas/BemPatrimonial'
+          allOf:
+            - $ref: '#/components/schemas/BemPatrimonial'
+            - type: object
+              properties:
+                comprovante_protocolo:
+                  type: string
+                  readOnly: true
+                  description: |
+                    Protocolo do comprovante anual de envio ao qual esta operação
+                    foi vinculada (gerado/atualizado automaticamente). Pode ser
+                    nulo se a geração do comprovante falhar — o bem é gravado
+                    normalmente mesmo assim.
+                  example: "SISPAT-PRD-2026-000123-47"
+
+    ComprovanteEnvio:
+      type: object
+      description: Comprovante anual de envio do inventário de uma empresa.
+      properties:
+        numero_protocolo:
+          type: string
+          description: Número do protocolo (com dígito verificador mod-97).
+          example: "SISPAT-PRD-2026-000123-47"
+        exercicio:
+          type: integer
+          description: Ano-base do envio (fuso America/Sao_Paulo).
+          example: 2026
+        ambiente:
+          type: string
+          description: Ambiente em que o comprovante foi gerado.
+          enum:
+            - PRD
+            - DES
+          example: "PRD"
+        cnpj:
+          type: string
+          description: CNPJ da empresa (14 dígitos, sem formatação).
+          example: "04903587000108"
+        data_primeiro_envio:
+          type: string
+          format: date-time
+          description: Data/hora do primeiro envio do exercício (ISO local, America/Sao_Paulo).
+          example: "2026-02-10T09:12:00"
+        data_ultimo_envio:
+          type: string
+          format: date-time
+          description: Data/hora do último envio do exercício (ISO local, America/Sao_Paulo).
+          example: "2026-05-20T17:40:00"
+        data_emissao:
+          type: string
+          format: date-time
+          description: Data/hora de emissão (criação) do comprovante.
+          example: "2026-02-10T09:12:03"
+        qtd_bens:
+          type: integer
+          description: Quantidade atual de bens no inventário da empresa (foto no último envio).
+          example: 152
+        qtd_operacoes:
+          type: integer
+          description: Total de operações de envio no exercício (criações + edições + imagens).
+          example: 410
+        qtd_criacoes:
+          type: integer
+          example: 152
+        qtd_edicoes:
+          type: integer
+          example: 256
+        qtd_imagens:
+          type: integer
+          example: 2
+        prazo_final:
+          type: string
+          format: date
+          description: Prazo final da obrigação anual.
+          example: "2026-07-31"
+        status_prazo:
+          type: string
+          description: Indica se o primeiro envio ocorreu dentro do prazo.
+          enum:
+            - DENTRO_PRAZO
+            - FORA_PRAZO
+          example: "DENTRO_PRAZO"
+        flag_retroativo:
+          type: string
+          description: S = gerado retroativamente (backfill); N = gerado em tempo real.
+          enum:
+            - S
+            - N
+          example: "N"
+        origem:
+          type: string
+          description: Origem do comprovante.
+          enum:
+            - API
+            - APEX
+            - BACKFILL
+          example: "API"
+        hash_conteudo:
+          type: string
+          description: Hash SHA-256 (hex) do conteúdo, para verificação de integridade.
+          example: "9f2c1a...e91"
+        cpf_primeiro:
+          type: string
+          description: CPF (mascarado) de quem fez o primeiro envio. Presente apenas no detalhe.
+          example: "***.***.***-12"
+        cpf_ultimo:
+          type: string
+          description: CPF (mascarado) de quem fez o último envio. Presente apenas no detalhe.
+          example: "***.***.***-12"
+        documento_url:
+          type: string
+          format: uri
+          description: URL absoluta para baixar o documento (HTML imprimível) do comprovante.
+          example: "https://prd-apex.antaq.gov.br/ords/sfc_sispat/sispat/bens/comprovantes/SISPAT-PRD-2026-000123-47/documento"
+        documento_path:
+          type: string
+          description: Caminho relativo do documento do comprovante.
+          example: "/comprovantes/SISPAT-PRD-2026-000123-47/documento"
+
+    ListaComprovantesResponse:
+      type: object
+      description: Resposta da listagem de comprovantes de envio com paginação.
+      properties:
+        pagination:
+          type: object
+          description: Metadados de paginação.
+          properties:
+            offset:
+              type: integer
+              example: 0
+            fetch_size:
+              type: integer
+              example: 25
+            total_records:
+              type: integer
+              example: 1
+        items:
+          type: array
+          description: Lista de comprovantes.
+          items:
+            $ref: '#/components/schemas/ComprovanteEnvio'
+        returned_count:
+          type: integer
+          example: 1
+        has_more:
+          type: boolean
+          example: false
 
     ErroPadrao:
       type: object

@@ -963,6 +963,7 @@
         const FIELD_DEFINITIONS = {
             cnpj:                        { label: 'CNPJ', required: true, type: 'string', apiType: 'integer', maxLength: 14, example: '04903587000108', description: 'CNPJ da empresa (14 dígitos, sem formatação)' },
             numero_registro_patrimonial: { label: 'Nº Registro Patrimonial', required: true, type: 'string', maxLength: 50, example: 'PAT-2024-0001', description: 'Identificador único do bem na empresa' },
+            numero_registro_patrimonial_pai: { label: 'Nº Registro Patrimonial Pai', required: false, type: 'string', maxLength: 50, example: '', description: 'Nº de registro do bem PAI, para vincular bens acessórios (filhos) a um bem principal. Opcional. Hierarquia de 1 nível: o pai não pode ter pai, e o bem não pode ser pai de si mesmo. O pai deve existir para o mesmo CNPJ (validado no servidor).' },
             numero_do_contrato:          { label: 'Nº do Contrato', required: true, type: 'string', maxLength: 255, example: 'CT-2024-001', description: 'Número do contrato vinculado' },
             cod_trigrama:                { label: 'Cód. Trigrama', required: false, type: 'string', maxLength: 3, example: 'GND', description: 'Código trigrama do porto brasileiro (validado contra tabela SISPAT)' },
             capitulo:                    { label: 'Capítulo NCM', required: true, type: 'integer', example: 84, description: 'Capítulo NCM' },
@@ -986,7 +987,7 @@
             vida_util_anos:              { label: 'Vida Útil (Anos)', required: true, type: 'integer', min: 1, example: 20, description: 'Vida útil em anos (> 0)' },
             taxa_depreciacao:            { label: 'Taxa Depreciação (%)', required: true, type: 'number', min: 0, max: 100, example: 5.00, description: 'Taxa anual de depreciação (0 a 100)' },
             data_de_avaliacao:           { label: 'Data de Avaliação', required: true, type: 'date', example: '2024-01-15', description: 'Data da avaliação (AAAA-MM-DD), >= data de tombamento' },
-            conta_contabil:              { label: 'Conta Contábil', required: true, type: 'string', maxLength: 50, example: '1.2.3.1.1.01.01', description: 'Conta contábil (validada contra tabela SISPAT)' },
+            conta_contabil:              { label: 'Conta Contábil', required: true, type: 'string', maxLength: 50, example: '1.2.3.01.02.001', description: 'Conta contábil (validada contra tabela SISPAT)' },
             historico:                   { label: 'Histórico', required: true, type: 'enum', enumMap: 'historico', example: '1 - Tombado', description: 'Status histórico do bem' },
             situacao:                    { label: 'Situação', required: true, type: 'enum', enumMap: 'situacao', example: '1 - Servível', description: 'Situação atual do bem' },
             estado_de_conservacao:       { label: 'Estado de Conservação', required: true, type: 'enum', enumMap: 'estado_de_conservacao', example: '3 - Bom', description: 'Estado de conservação' },
@@ -999,7 +1000,7 @@
             sigla_uf:                    { label: 'UF', required: true, type: 'uf', example: 'SP', description: 'Sigla da UF (2 caracteres)' },
             tempo_de_utilizacao:         { label: 'Tempo de Utilização (Anos)', required: false, type: 'integer', min: 0, example: 5, description: 'Tempo acumulado de uso em anos' },
             modalidade_exploracao:       { label: 'Modalidade de Exploração', required: false, type: 'enum', enumMap: 'modalidade_exploracao', example: '2 - Arrendatário', description: 'Modalidade de exploração' },
-            conta_contabil_depreciacao:  { label: 'Conta Contábil Depreciação', required: false, type: 'string', maxLength: 50, example: '2.1.1.01.01', description: 'Conta contábil da despesa de depreciação' },
+            conta_contabil_depreciacao:  { label: 'Conta Contábil Depreciação', required: false, type: 'string', maxLength: 50, example: '6.3.1.01', description: 'Conta contábil da despesa de depreciação (validada contra tabela SISPAT)' },
             depreciacao_especial:        { label: 'Depreciação Especial', required: false, type: 'enum', enumMap: 'depreciacao_especial', example: '2 - Não', description: 'Possui depreciação especial?' },
             desc_deprec_especial:        { label: 'Justificativa Depr. Especial', required: false, type: 'string', maxLength: 4000, example: 'Bem com vida útil reduzida devido ao uso intensivo', description: 'Justificativa (obrigatório se depreciação_especial = 1)' }
         };
@@ -1172,7 +1173,8 @@
                 refSheet.getRow(noteRow).getCell(1).font = { bold: true };
                 refSheet.getRow(noteRow + 1).getCell(1).value = '1. data_de_avaliacao deve ser igual ou posterior a data_de_tombamento';
                 refSheet.getRow(noteRow + 2).getCell(1).value = '2. Se depreciacao_especial = 1 (Sim), desc_deprec_especial é obrigatório';
-                refSheet.getRow(noteRow + 3).getCell(1).value = '3. Os campos conta_contabil, NCM (capitulo+posicao+subposicao) e cod_trigrama são validados localmente e no servidor.';
+                refSheet.getRow(noteRow + 3).getCell(1).value = '3. Os campos conta_contabil, conta_contabil_depreciacao, NCM (capitulo+posicao+subposicao) e cod_trigrama são validados localmente e no servidor.';
+                refSheet.getRow(noteRow + 4).getCell(1).value = '4. numero_registro_patrimonial_pai (opcional): vincula um bem filho a um bem pai. Hierarquia de 1 nível — o bem não pode ser pai de si mesmo; o pai não pode ter pai; um bem que já é pai não pode virar filho; o pai deve existir para o mesmo CNPJ.';
 
                 // Generate and download
                 var buffer = await wb.xlsx.writeBuffer();
@@ -1468,6 +1470,13 @@
                     }
                 }
 
+                // Business rule: numero_registro_patrimonial_pai não pode referenciar o próprio bem
+                if (record.numero_registro_patrimonial_pai && record.numero_registro_patrimonial) {
+                    if (String(record.numero_registro_patrimonial_pai).trim() === String(record.numero_registro_patrimonial).trim()) {
+                        errors.push('"Nº Registro Patrimonial Pai": um bem não pode ser pai de si mesmo');
+                    }
+                }
+
                 // Conditional: depreciacao_especial = 1 requires desc_deprec_especial
                 if (record.depreciacao_especial === 1) {
                     if (!record.desc_deprec_especial || String(record.desc_deprec_especial).trim() === '') {
@@ -1495,6 +1504,17 @@
                     }
                 }
 
+                // Validação local: conta_contabil_depreciacao (opcional)
+                if (record.conta_contabil_depreciacao) {
+                    if (CONTAS_CONTABEIS) {
+                        if (!CONTAS_CONTABEIS.has(String(record.conta_contabil_depreciacao).trim())) {
+                            errors.push('"Conta Contábil Depreciação": código "' + record.conta_contabil_depreciacao + '" não encontrado na tabela de contas contábeis');
+                        }
+                    } else {
+                        warnings.push('conta_contabil_depreciacao será validada apenas no servidor (dados de referência não carregados)');
+                    }
+                }
+
                 // Validação local: NCM (capitulo + posicao + subposicao)
                 if (record.capitulo && record.posicao && record.subposicao) {
                     if (SUBPOSICOES_NCM) {
@@ -1519,6 +1539,64 @@
                 }
 
                 return { errors: errors, warnings: warnings };
+            },
+
+            // Validação de hierarquia pai-filho entre linhas (numero_registro_patrimonial_pai).
+            // Escopo por CNPJ. Retorna mapa { originalRowIndex: { errors, warnings } } com os
+            // problemas detectáveis localmente; o servidor é a autoridade final.
+            validateHierarchy: function(rows) {
+                function cnpjKey(d) { return String(d.cnpj == null ? '' : d.cnpj).replace(/\D/g, ''); }
+                function reg(d) { return d.numero_registro_patrimonial == null ? '' : String(d.numero_registro_patrimonial).trim(); }
+                function pai(d) { return d.numero_registro_patrimonial_pai == null ? '' : String(d.numero_registro_patrimonial_pai).trim(); }
+
+                // Índice por CNPJ: registros presentes na planilha e quais são referenciados como pai.
+                var byCnpj = {};
+                rows.forEach(function(row) {
+                    var d = row.data;
+                    var ck = cnpjKey(d);
+                    if (!byCnpj[ck]) byCnpj[ck] = { regMap: {}, paiSet: {} };
+                    var r = reg(d);
+                    if (r) byCnpj[ck].regMap[r] = { hasPai: pai(d) !== '', rowIndex: row.originalRowIndex };
+                });
+                rows.forEach(function(row) {
+                    var d = row.data;
+                    var p = pai(d);
+                    if (!p) return;
+                    var ck = cnpjKey(d);
+                    if (!byCnpj[ck].paiSet[p]) byCnpj[ck].paiSet[p] = [];
+                    byCnpj[ck].paiSet[p].push(reg(d));
+                });
+
+                var result = {};
+                rows.forEach(function(row) {
+                    var d = row.data;
+                    var p = pai(d);
+                    if (!p) return;
+                    var ck = cnpjKey(d);
+                    var r = reg(d);
+                    if (p === r) return; // autorreferência já tratada em validateRow (regra por linha)
+                    var ctx = byCnpj[ck];
+                    var errs = [], warns = [];
+
+                    // Regra 4: bem referenciado como pai por outro(s) na planilha não pode ter pai
+                    if (ctx.paiSet[r] && ctx.paiSet[r].length > 0) {
+                        errs.push('"Nº Registro Patrimonial Pai": este bem já é pai de outro(s) bem(ns) nesta planilha e, por isso, não pode ser vinculado como filho (hierarquia de 1 nível)');
+                    }
+
+                    var paiEntry = ctx.regMap[p];
+                    if (!paiEntry) {
+                        // Regra 2: pai pode já existir no servidor — aviso, não erro
+                        warns.push('"Nº Registro Patrimonial Pai": bem pai "' + p + '" não encontrado nesta planilha (mesmo CNPJ) — será validado no servidor (o pai precisa já estar cadastrado)');
+                    } else if (paiEntry.hasPai) {
+                        // Regra 3: pai não pode ser filho de ninguém (bloqueia "netos")
+                        errs.push('"Nº Registro Patrimonial Pai": o bem pai "' + p + '" também possui um pai — não é permitido criar "netos" (hierarquia de 1 nível)');
+                    }
+
+                    if (errs.length || warns.length) {
+                        result[row.originalRowIndex] = { errors: errs, warnings: warns };
+                    }
+                });
+                return result;
             },
 
             buildApiPayload: function(record) {
@@ -1773,6 +1851,16 @@
                         warnings: result.warnings,
                         isValid: result.errors.length === 0
                     };
+                });
+
+                // Validação de hierarquia pai-filho entre linhas (numero_registro_patrimonial_pai)
+                var hierarchy = Validators.validateHierarchy(this.parsedRows);
+                this.validationResults.forEach(function(vr) {
+                    var extra = hierarchy[vr.originalRowIndex];
+                    if (!extra) return;
+                    if (extra.errors.length) vr.errors = vr.errors.concat(extra.errors);
+                    if (extra.warnings.length) vr.warnings = vr.warnings.concat(extra.warnings);
+                    vr.isValid = vr.errors.length === 0;
                 });
 
                 this.currentPage = 1;

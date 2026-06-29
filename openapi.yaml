@@ -727,6 +727,11 @@ paths:
                 $ref: '#/components/schemas/ErroPadrao'
 
   /comprovantes:
+    servers:
+      - url: 'https://prd-apex.antaq.gov.br/ords/sfc_sispat/sispat'
+        description: Produção (Oficial)
+      - url: 'https://des-apex.antaq.gov.br/ords/sfc_sispat/sispat'
+        description: Desenvolvimento (Sandbox)
     get:
       tags:
         - Comprovantes
@@ -779,6 +784,11 @@ paths:
                 $ref: '#/components/schemas/ErroPadrao'
 
   /comprovantes/{numero_protocolo}:
+    servers:
+      - url: 'https://prd-apex.antaq.gov.br/ords/sfc_sispat/sispat'
+        description: Produção (Oficial)
+      - url: 'https://des-apex.antaq.gov.br/ords/sfc_sispat/sispat'
+        description: Desenvolvimento (Sandbox)
     get:
       tags:
         - Comprovantes
@@ -824,6 +834,11 @@ paths:
                 $ref: '#/components/schemas/ErroPadrao'
 
   /comprovantes/{numero_protocolo}/documento:
+    servers:
+      - url: 'https://prd-apex.antaq.gov.br/ords/sfc_sispat/sispat'
+        description: Produção (Oficial)
+      - url: 'https://des-apex.antaq.gov.br/ords/sfc_sispat/sispat'
+        description: Desenvolvimento (Sandbox)
     get:
       tags:
         - Comprovantes
@@ -1770,21 +1785,6 @@ components:
             - DENTRO_PRAZO
             - FORA_PRAZO
           example: "DENTRO_PRAZO"
-        flag_retroativo:
-          type: string
-          description: S = gerado retroativamente (backfill); N = gerado em tempo real.
-          enum:
-            - S
-            - N
-          example: "N"
-        origem:
-          type: string
-          description: Origem do comprovante.
-          enum:
-            - API
-            - APEX
-            - BACKFILL
-          example: "API"
         hash_conteudo:
           type: string
           description: Hash SHA-256 (hex) do conteúdo, para verificação de integridade.
@@ -1801,7 +1801,7 @@ components:
           type: string
           format: uri
           description: URL absoluta para baixar o documento (HTML imprimível) do comprovante.
-          example: "https://prd-apex.antaq.gov.br/ords/sfc_sispat/sispat/bens/comprovantes/SISPAT-PRD-2026-000123-47/documento"
+          example: "https://prd-apex.antaq.gov.br/ords/sfc_sispat/sispat/comprovantes/SISPAT-PRD-2026-000123-47/documento"
         documento_path:
           type: string
           description: Caminho relativo do documento do comprovante.

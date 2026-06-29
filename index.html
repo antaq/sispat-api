@@ -468,7 +468,7 @@
     <div class="custom-header">
         <img src="https://prd-apex.antaq.gov.br/ords/r/sfc/files/static/v76/img/app-105-logo.png" alt="ANTAQ" onerror="this.style.display='none'">
         <div style="flex: 1;">
-            <h1>SISPAT - API de Bens Patrimoniais <span class="version-badge">v2.3.0</span></h1>
+            <h1>SISPAT - API de Bens Patrimoniais <span class="version-badge">v2.4.0</span></h1>
             <p>Agência Nacional de Transportes Aquaviários - ANTAQ</p>
         </div>
         <a href="upload.html" class="export-btn" title="Importar bens patrimoniais via planilha Excel" style="margin-right: 8px;">
@@ -855,6 +855,77 @@ Console.WriteLine(json);</code></pre>
             </div>
         </div>
 
+        <!-- Seção: Comprovantes de Envio -->
+        <div class="collapsible-section">
+            <div class="collapsible-header">
+                <span>Comprovantes de Envio - Consulta</span>
+                <span class="method-badge method-get">GET</span>
+            </div>
+            <div class="collapsible-content">
+                <div class="collapsible-body">
+                    <p>A cada envio (PUT de bem ou POST de imagem) o sistema consolida automaticamente um <strong>comprovante anual de envio</strong> por empresa, com número de protocolo. Estes endpoints permitem consultar os comprovantes e baixar o documento.</p>
+
+                    <div class="alert alert-info">
+                        <strong>Modelo:</strong> há <strong>um comprovante por exercício</strong> (ano) por empresa. O número de protocolo (ex.: <code>SISPAT-PRD-2026-000123-47</code>) é fixado no primeiro envio do exercício e não muda; os contadores e datas são consolidados a cada novo envio. O <code>comprovante_protocolo</code> também é retornado na resposta de cada <span class="method-badge method-put" style="font-size: 11px;">PUT</span>.
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <strong>Base URL:</strong> os comprovantes ficam em <code>/sispat/comprovantes</code> (no mesmo nível de <code>/sispat/bens</code>). A autenticação é a mesma (<code>x-api-key</code>) e o retorno é sempre escopado ao CNPJ da chave.
+                    </div>
+
+                    <h4>1) Listar comprovantes da empresa</h4>
+                    <p>Filtro opcional por exercício (<code>?exercicio=YYYY</code>) e paginação nativa do ORDS (<code>?offset=</code>).</p>
+<pre><code>curl "https://prd-apex.antaq.gov.br/ords/sfc_sispat/sispat/comprovantes?exercicio=2026" \
+     -H "x-api-key: sispat_live_SUA_CHAVE_AQUI" \
+     -H "Accept: application/json"</code></pre>
+
+                    <h4>Exemplo de resposta</h4>
+<pre><code>{
+  "pagination": { "offset": 0, "fetch_size": 25, "total_records": 1 },
+  "items": [
+    {
+      "numero_protocolo": "SISPAT-PRD-2026-000123-47",
+      "exercicio": 2026,
+      "ambiente": "PRD",
+      "cnpj": "04903587000108",
+      "data_primeiro_envio": "2026-02-10T09:12:00",
+      "data_ultimo_envio": "2026-05-20T17:40:00",
+      "data_emissao": "2026-02-10T09:12:03",
+      "qtd_bens": 152,
+      "qtd_operacoes": 410,
+      "qtd_criacoes": 152,
+      "qtd_edicoes": 256,
+      "qtd_imagens": 2,
+      "prazo_final": "2026-07-31",
+      "status_prazo": "DENTRO_PRAZO",
+      "hash_conteudo": "9f2c1a...e91",
+      "documento_url": "https://prd-apex.antaq.gov.br/ords/sfc_sispat/sispat/comprovantes/SISPAT-PRD-2026-000123-47/documento",
+      "documento_path": "/comprovantes/SISPAT-PRD-2026-000123-47/documento"
+    }
+  ],
+  "returned_count": 1,
+  "has_more": false
+}</code></pre>
+
+                    <h4>2) Detalhar um comprovante</h4>
+                    <p>Retorna 1 comprovante pelo número de protocolo (404 se não pertencer ao CNPJ da chave). Inclui os CPFs (mascarados) de quem enviou.</p>
+<pre><code>curl "https://prd-apex.antaq.gov.br/ords/sfc_sispat/sispat/comprovantes/SISPAT-PRD-2026-000123-47" \
+     -H "x-api-key: sispat_live_SUA_CHAVE_AQUI" \
+     -H "Accept: application/json"</code></pre>
+
+                    <h4>3) Baixar o documento (HTML imprimível / PDF)</h4>
+                    <p>Retorna o comprovante como documento HTML autossuficiente (<code>Content-Type: text/html</code>). Abra no navegador e use <em>Imprimir → Salvar como PDF</em>.</p>
+<pre><code>curl "https://prd-apex.antaq.gov.br/ords/sfc_sispat/sispat/comprovantes/SISPAT-PRD-2026-000123-47/documento" \
+     -H "x-api-key: sispat_live_SUA_CHAVE_AQUI" \
+     -o comprovante.html</code></pre>
+
+                    <div class="alert alert-success">
+                        <strong>Dica:</strong> use o campo <code>documento_url</code> retornado na listagem/detalhe para baixar o documento diretamente.
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Seção 5: Vinculação de Bens (Hierarquia Pai-Filho) -->
         <div class="collapsible-section">
             <div class="collapsible-header">Vinculação de Bens (Hierarquia Pai-Filho)</div>
@@ -1161,6 +1232,31 @@ PUT /sispat/bens/
                         equipes de TI. Mudanças que afetam contratos existentes são sinalizadas
                         em destaque.
                     </p>
+
+                    <h4>Junho/2026 — Comprovantes de Envio (v2.4.0)</h4>
+                    <ul>
+                        <li>
+                            Novos endpoints de consulta em <code>/sispat/comprovantes</code>:
+                            <ul>
+                                <li><span class="method-badge method-get" style="font-size: 11px;">GET</span> <code>/comprovantes</code> — lista os comprovantes anuais da empresa (filtro <code>?exercicio=YYYY</code>);</li>
+                                <li><span class="method-badge method-get" style="font-size: 11px;">GET</span> <code>/comprovantes/{numero_protocolo}</code> — detalhe de um comprovante;</li>
+                                <li><span class="method-badge method-get" style="font-size: 11px;">GET</span> <code>/comprovantes/{numero_protocolo}/documento</code> — documento HTML imprimível.</li>
+                            </ul>
+                        </li>
+                        <li>
+                            Passa a existir <strong>um comprovante por exercício</strong> por empresa, consolidado
+                            automaticamente a cada envio, com número de protocolo (ex.: <code>SISPAT-PRD-2026-000123-47</code>).
+                        </li>
+                        <li>
+                            A resposta do <span class="method-badge method-put" style="font-size: 11px;">PUT</span> de bem
+                            (e do <span class="method-badge method-post" style="font-size: 11px;">POST</span> de imagem) passa a
+                            incluir o campo <code>comprovante_protocolo</code>.
+                        </li>
+                        <li>
+                            <strong>Retrocompatível:</strong> nenhum contrato existente foi alterado — apenas um campo
+                            novo (read-only) na resposta e novos endpoints de leitura.
+                        </li>
+                    </ul>
 
                     <h4>Abril/2026 — Atualização do dicionário <code>tipo_de_bem</code> (alinhamento ao SICRASP/2022)</h4>
                     <ul>

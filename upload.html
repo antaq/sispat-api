@@ -869,30 +869,51 @@
         var PORTOS_TRIGRAMA = null;  // Set populated on load
 
         async function loadValidationData() {
-            try {
-                var [contasResp, subsResp, portosResp] = await Promise.all([
-                    fetch('data/contas_contabeis.json'),
-                    fetch('data/subposicoes_ncm.json'),
-                    fetch('data/portos_trigrama.json')
-                ]);
-                if (contasResp.ok) {
-                    var contasArr = await contasResp.json();
-                    CONTAS_CONTABEIS = new Set(contasArr);
-                    console.log('Contas contábeis carregadas:', CONTAS_CONTABEIS.size);
+            var missing = [];
+            async function loadOne(url, label, apply) {
+                try {
+                    var resp = await fetch(url);
+                    if (!resp.ok) { missing.push(label); return; }
+                    apply(await resp.json());
+                } catch (e) {
+                    missing.push(label);
                 }
-                if (subsResp.ok) {
-                    var subsArr = await subsResp.json();
-                    SUBPOSICOES_NCM = new Set(subsArr);
-                    console.log('Subposições NCM carregadas:', SUBPOSICOES_NCM.size);
-                }
-                if (portosResp.ok) {
-                    var portosArr = await portosResp.json();
-                    PORTOS_TRIGRAMA = new Set(portosArr);
-                    console.log('Trigramas de portos carregados:', PORTOS_TRIGRAMA.size);
-                }
-            } catch (e) {
-                console.warn('Não foi possível carregar dados de validação:', e.message);
             }
+            await Promise.all([
+                loadOne('data/contas_contabeis.json', 'contas contábeis', function(a) {
+                    CONTAS_CONTABEIS = new Set(a); console.log('Contas contábeis carregadas:', CONTAS_CONTABEIS.size);
+                }),
+                loadOne('data/subposicoes_ncm.json', 'subposições NCM', function(a) {
+                    SUBPOSICOES_NCM = new Set(a); console.log('Subposições NCM carregadas:', SUBPOSICOES_NCM.size);
+                }),
+                loadOne('data/portos_trigrama.json', 'trigramas de portos', function(a) {
+                    PORTOS_TRIGRAMA = new Set(a); console.log('Trigramas de portos carregados:', PORTOS_TRIGRAMA.size);
+                })
+            ]);
+            if (missing.length) {
+                console.warn('Tabelas de referência não carregadas:', missing.join(', '));
+                showDataLoadWarning(missing);
+            }
+        }
+
+        // Aviso visível: sem as tabelas de referência, a validação de conta/NCM/trigrama
+        // não roda na página e os erros só aparecem no envio (a API pode recusar linhas).
+        function showDataLoadWarning(missing) {
+            var container = document.querySelector('.container');
+            if (!container) return;
+            var div = document.createElement('div');
+            div.className = 'alert alert-warning';
+            div.style.marginBottom = '20px';
+            var strong = document.createElement('strong');
+            strong.textContent = 'Atenção: ';
+            div.appendChild(strong);
+            div.appendChild(document.createTextNode(
+                'as tabelas de referência (' + missing.join(', ') + ') não foram carregadas. ' +
+                'A validação de conta contábil, NCM e trigrama de porto não será feita nesta página — ' +
+                'esses campos só serão verificados ao enviar, e a API pode recusar linhas. ' +
+                'Verifique se a pasta data/ está publicada junto com esta página.'
+            ));
+            container.insertBefore(div, container.firstChild);
         }
 
         // =====================================================================
@@ -1349,7 +1370,15 @@
 
                 // Number normalization
                 if (def.type === 'number') {
-                    var num = parseFloat(String(cellValue).replace(',', '.'));
+                    var rawStr = String(cellValue).trim();
+                    // Coordenadas em graus/minutos/segundos (GMS) — ex.: 0°3'37.26" ou 51°10'2.56"O.
+                    // parseFloat("0°3'37.26\"") devolveria 0 silenciosamente, gravando local errado.
+                    if (/[°º'′"″]/.test(rawStr) || /\d\s*[NSLOEWnsloew]\s*$/.test(rawStr)) {
+                        var dec = SpreadsheetParser._dmsToDecimal(rawStr);
+                        // null => mantém a string original para falhar na validação com mensagem clara
+                        return dec === null ? rawStr : dec;
+                    }
+                    var num = parseFloat(rawStr.replace(',', '.'));
                     return isNaN(num) ? cellValue : num;
                 }
                 if (def.type === 'integer') {
@@ -1380,6 +1409,27 @@
                 }
 
                 return str; // return raw, will fail validation
+            },
+
+            // Converte "GG°MM'SS.ss\"[N/S/L/O/E/W]" para graus decimais.
+            // Retorna número apenas quando o sinal/hemisfério é determinável; caso contrário
+            // retorna null (não "chuta" o sinal — força o usuário a informar graus decimais).
+            _dmsToDecimal: function(str) {
+                var s = String(str).trim();
+                var m = s.match(/^\s*([+-])?\s*(\d+(?:[.,]\d+)?)\s*[°º]\s*(?:(\d+(?:[.,]\d+)?)\s*['′]\s*)?(?:(\d+(?:[.,]\d+)?)\s*["″]\s*)?\s*([NSLOEWnsloew])?\s*$/);
+                if (!m) return null;
+                var deg = parseFloat(m[2].replace(',', '.'));
+                if (isNaN(deg)) return null;
+                var min = m[3] ? parseFloat(m[3].replace(',', '.')) : 0;
+                var sec = m[4] ? parseFloat(m[4].replace(',', '.')) : 0;
+                var val = deg + (min / 60) + (sec / 3600);
+                var hemi = m[5] ? m[5].toUpperCase() : '';
+                var sign = m[1];
+                if (hemi === 'S' || hemi === 'O' || hemi === 'W') return -val;
+                if (hemi === 'N' || hemi === 'L' || hemi === 'E') return val;
+                if (sign === '-') return -val;
+                if (sign === '+') return val;
+                return null; // sem hemisfério nem sinal explícito: indeterminado
             }
         };
 
@@ -1421,7 +1471,11 @@
 
                     if (def.type === 'number') {
                         if (typeof val !== 'number' || isNaN(val)) {
-                            errors.push('"' + def.label + '": deve ser um número');
+                            if (/[°º'′"″]/.test(String(val)) || /\d\s*[NSLOEWnsloew]\s*$/.test(String(val))) {
+                                errors.push('"' + def.label + '": informe em GRAUS DECIMAIS com sinal (ex.: -23.9618), não em graus/minutos/segundos. Para Sul e Oeste use sinal negativo (ou indique o hemisfério S/O).');
+                            } else {
+                                errors.push('"' + def.label + '": deve ser um número');
+                            }
                         } else {
                             if (def.min !== undefined && val < def.min) errors.push('"' + def.label + '": valor ' + val + ' menor que o mínimo ' + def.min);
                             if (def.max !== undefined && val > def.max) errors.push('"' + def.label + '": valor ' + val + ' maior que o máximo ' + def.max);
@@ -1484,12 +1538,16 @@
                     }
                 }
 
-                // Validação: cod_trigrama (optional in spec, required server-side)
-                if (!record.cod_trigrama || String(record.cod_trigrama).trim() === '') {
-                    warnings.push('cod_trigrama vazio - a API pode rejeitar esta linha (campo obrigatório no servidor)');
-                } else if (PORTOS_TRIGRAMA) {
-                    if (!PORTOS_TRIGRAMA.has(String(record.cod_trigrama).trim())) {
-                        errors.push('"Cód. Trigrama": código "' + record.cod_trigrama + '" não encontrado na tabela de portos brasileiros');
+                // Validação local: cod_trigrama. O servidor NÃO valida nem exige este campo —
+                // esta checagem é a única rede de proteção contra códigos incorretos (ex.: informar
+                // a sigla do equipamento em vez do trigrama do porto). Campo opcional.
+                if (record.cod_trigrama && String(record.cod_trigrama).trim() !== '') {
+                    if (PORTOS_TRIGRAMA) {
+                        if (!PORTOS_TRIGRAMA.has(String(record.cod_trigrama).trim())) {
+                            errors.push('"Cód. Trigrama": código "' + record.cod_trigrama + '" não consta na tabela de portos do SISPAT. Informe o trigrama do PORTO (não a sigla do equipamento).');
+                        }
+                    } else {
+                        warnings.push('cod_trigrama não pôde ser validado localmente (tabela de portos não carregada).');
                     }
                 }
 
@@ -1515,8 +1573,22 @@
                     }
                 }
 
-                // Validação local: NCM (capitulo + posicao + subposicao)
-                if (record.capitulo && record.posicao && record.subposicao) {
+                // Validação: subposição NCM deve ter 6 dígitos (não o NCM completo de 8).
+                // Roda mesmo sem a tabela de referência carregada — pega o erro mais comum.
+                if (record.subposicao !== null && record.subposicao !== undefined && record.subposicao !== '') {
+                    var subDigits = String(record.subposicao).replace(/\D/g, '');
+                    if (subDigits.length > 6) {
+                        errors.push('"Subposição NCM": deve ter 6 dígitos (você informou ' + subDigits.length +
+                            ' — provavelmente o NCM completo de 8 dígitos; use apenas os 6 primeiros, ex.: ' +
+                            subDigits.substring(0, 6) + ')');
+                    }
+                }
+
+                // Validação local: NCM (capitulo + posicao + subposicao).
+                // Pula o lookup quando a subposição tem mais de 6 dígitos — esse caso já é
+                // reportado pela mensagem específica acima (evita erro duplicado).
+                var subOk6 = String(record.subposicao).replace(/\D/g, '').length <= 6;
+                if (record.capitulo && record.posicao && record.subposicao && subOk6) {
                     if (SUBPOSICOES_NCM) {
                         var sub = Number(record.subposicao);
                         if (!SUBPOSICOES_NCM.has(sub)) {

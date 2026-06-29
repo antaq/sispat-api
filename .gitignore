@@ -5,7 +5,8 @@ uploads/
 bruno/
 docs/
 sql/
-data/
+# data/ NÃO é ignorado: contém as tabelas de referência (contas/NCM/portos)
+# consumidas pela upload.html e servidas na GitHub Pages.
 rest/
 funcoes/
 ddl/

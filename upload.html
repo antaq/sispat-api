@@ -490,6 +490,23 @@
             .filter-checkbox { margin-left: 0; }
         }
 
+        /* Comprovante */
+        .comprovante-loading { display: flex; align-items: center; gap: 10px; color: #666; padding: 12px 0; }
+        .comprovante-head { display: flex; justify-content: space-between; align-items: center; gap: 16px;
+            border-bottom: 2px solid #e9ecef; padding-bottom: 14px; margin-bottom: 16px; flex-wrap: wrap; }
+        .comprovante-label { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: #888; }
+        .comprovante-proto { font-family: 'Consolas','Monaco',monospace; font-size: 20px; font-weight: 700; color: #1351b4; }
+        .comprovante-status { padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+        .comprovante-status.st-ok { background: #d4edda; color: #155724; }
+        .comprovante-status.st-late { background: #f8d7da; color: #721c24; }
+        .comprovante-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px 24px; }
+        .comprovante-field { display: flex; flex-direction: column; gap: 2px; }
+        .comprovante-flabel { font-size: 11px; text-transform: uppercase; letter-spacing: .3px; color: #888; }
+        .comprovante-fvalue { font-size: 15px; font-weight: 600; color: #3b4151; }
+        .comprovante-hash { margin-top: 16px; display: flex; flex-direction: column; gap: 4px; }
+        .comprovante-hash code { font-size: 11px; word-break: break-all; background: #f6f8fa; padding: 6px 8px;
+            border-radius: 4px; border: 1px solid #e1e4e8; color: #444; }
+
         /* Hidden */
         .hidden { display: none !important; }
 
@@ -762,6 +779,12 @@
                 </table>
             </div>
             <div class="pagination" id="progressPagination"></div>
+        </div>
+
+        <!-- STEP 5: COMPROVANTE DE ENVIO -->
+        <div class="card hidden" id="cardComprovante">
+            <h3><span class="step-number">5</span> Comprovante de Envio</h3>
+            <div id="comprovanteContent"></div>
         </div>
     </div>
 
@@ -1705,6 +1728,11 @@
                 production: 'https://prd-apex.antaq.gov.br/ords/sfc_sispat/sispat/bens/'
             },
 
+            COMPROVANTES_URLS: {
+                sandbox: 'https://des-apex.antaq.gov.br/ords/sfc_sispat/sispat/comprovantes',
+                production: 'https://prd-apex.antaq.gov.br/ords/sfc_sispat/sispat/comprovantes'
+            },
+
             config: {
                 delayMs: 200,
                 maxRetries: 3,
@@ -1909,6 +1937,7 @@
                 document.getElementById('fileInfo').classList.remove('visible');
                 document.getElementById('cardValidation').classList.add('hidden');
                 document.getElementById('cardProgress').classList.add('hidden');
+                document.getElementById('cardComprovante').classList.add('hidden');
                 this.parsedRows = [];
                 this.validationResults = [];
             },
@@ -2109,6 +2138,134 @@
                 document.getElementById('progressActions').classList.add('hidden');
                 document.getElementById('resultsActions').classList.remove('hidden');
                 this._sendResults = allResults;
+
+                // Comprovante de envio do exercício atual (só se houve algum sucesso)
+                if (created + updated > 0) {
+                    this.showComprovante(apiKey, env);
+                }
+            },
+
+            // Busca e exibe o comprovante anual de envio (endpoint /sispat/comprovantes)
+            showComprovante: async function(apiKey, env) {
+                var card = document.getElementById('cardComprovante');
+                var content = document.getElementById('comprovanteContent');
+                card.classList.remove('hidden');
+                content.textContent = '';
+                var loading = document.createElement('div');
+                loading.className = 'comprovante-loading';
+                var sp = document.createElement('span'); sp.className = 'spinner';
+                loading.appendChild(sp);
+                loading.appendChild(document.createTextNode(' Emitindo comprovante do exercício…'));
+                content.appendChild(loading);
+                card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                var year = new Date().getFullYear();
+                var base = ApiClient.COMPROVANTES_URLS[env];
+                try {
+                    var resp = await fetch(base + '?exercicio=' + year, {
+                        method: 'GET',
+                        headers: { 'Accept': 'application/json', 'x-api-key': apiKey }
+                    });
+                    var data = {};
+                    try { data = await resp.json(); } catch (e) { /* ignore */ }
+                    var items = (data && data.items) || [];
+                    if (!resp.ok || items.length === 0) {
+                        UIController._comprovanteMsg('alert-info',
+                            'O comprovante do exercício ' + year + ' ainda não está disponível. ' +
+                            'Os dados foram enviados; consulte mais tarde em /sispat/comprovantes.');
+                        return;
+                    }
+                    UIController._renderComprovante(items[0], apiKey);
+                } catch (e) {
+                    UIController._comprovanteMsg('alert-warning',
+                        'Não foi possível carregar o comprovante agora (' + e.message + '). ' +
+                        'Os dados foram enviados; o comprovante pode ser consultado em /sispat/comprovantes.');
+                }
+            },
+
+            _comprovanteMsg: function(cls, text) {
+                var content = document.getElementById('comprovanteContent');
+                content.textContent = '';
+                var div = document.createElement('div');
+                div.className = 'alert ' + cls;
+                div.textContent = text;
+                content.appendChild(div);
+            },
+
+            _renderComprovante: function(c, apiKey) {
+                var content = document.getElementById('comprovanteContent');
+                content.textContent = '';
+                function el(tag, cls, txt) {
+                    var e = document.createElement(tag);
+                    if (cls) e.className = cls;
+                    if (txt !== undefined && txt !== null && txt !== '') e.textContent = String(txt);
+                    return e;
+                }
+                function fmt(s) {
+                    if (!s) return '—';
+                    var m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}))?/);
+                    if (!m) return String(s);
+                    return m[3] + '/' + m[2] + '/' + m[1] + (m[4] ? ' ' + m[4] + ':' + m[5] : '');
+                }
+
+                var head = el('div', 'comprovante-head');
+                var pw = el('div');
+                pw.appendChild(el('div', 'comprovante-label', 'Número de protocolo'));
+                pw.appendChild(el('div', 'comprovante-proto', c.numero_protocolo));
+                head.appendChild(pw);
+                var dentro = c.status_prazo === 'DENTRO_PRAZO';
+                head.appendChild(el('span', 'comprovante-status ' + (dentro ? 'st-ok' : 'st-late'),
+                    dentro ? 'Dentro do prazo' : 'Fora do prazo'));
+                content.appendChild(head);
+
+                var grid = el('div', 'comprovante-grid');
+                function field(label, value) {
+                    var f = el('div', 'comprovante-field');
+                    f.appendChild(el('span', 'comprovante-flabel', label));
+                    f.appendChild(el('span', 'comprovante-fvalue', (value === undefined || value === null || value === '') ? '—' : value));
+                    grid.appendChild(f);
+                }
+                field('Exercício', c.exercicio);
+                field('Ambiente', c.ambiente);
+                field('CNPJ', c.cnpj);
+                field('Emitido em', fmt(c.data_emissao));
+                field('Primeiro envio', fmt(c.data_primeiro_envio));
+                field('Último envio', fmt(c.data_ultimo_envio));
+                field('Bens no inventário', c.qtd_bens);
+                field('Operações', c.qtd_operacoes + ' (' + c.qtd_criacoes + ' criações / ' + c.qtd_edicoes + ' edições)');
+                field('Imagens enviadas', c.qtd_imagens);
+                field('Prazo final', fmt(c.prazo_final));
+                content.appendChild(grid);
+
+                if (c.hash_conteudo) {
+                    var hw = el('div', 'comprovante-hash');
+                    hw.appendChild(el('span', 'comprovante-flabel', 'Hash do conteúdo (SHA-256)'));
+                    hw.appendChild(el('code', null, c.hash_conteudo));
+                    content.appendChild(hw);
+                }
+
+                if (c.documento_url) {
+                    var actions = el('div', 'btn-group');
+                    actions.style.marginTop = '16px';
+                    var btn = el('button', 'btn btn-primary btn-sm', 'Ver / Imprimir comprovante (PDF)');
+                    // O documento exige a x-api-key no header — abre uma aba e injeta o HTML autenticado.
+                    btn.addEventListener('click', function() {
+                        var w = window.open('about:blank', '_blank');
+                        fetch(c.documento_url, { headers: { 'x-api-key': apiKey } })
+                            .then(function(r) { return r.blob(); })
+                            .then(function(blob) {
+                                var u = URL.createObjectURL(blob);
+                                if (w) { w.location.href = u; } else { window.open(u, '_blank'); }
+                            })
+                            .catch(function(err) {
+                                if (w && w.document && w.document.body) {
+                                    w.document.body.textContent = 'Erro ao carregar o comprovante: ' + err.message;
+                                }
+                            });
+                    });
+                    actions.appendChild(btn);
+                    content.appendChild(actions);
+                }
             },
 
             _renderProgressTable: function(results) {

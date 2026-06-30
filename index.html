@@ -384,6 +384,35 @@
             margin-right: 6px;
             vertical-align: middle;
         }
+        /* Link de tutorial em vídeo dentro do Guia de Integração */
+        .video-link-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin: 6px 0 14px;
+            padding: 9px 16px;
+            background: #1351b4;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .video-link-btn:hover { background: #0c3d8a; }
+        .video-link-btn .play-dot {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            background: #c0392b;
+            color: #fff;
+            border-radius: 50%;
+        }
         /* Modal de vídeo tutorial */
         .video-modal-overlay {
             display: none;
@@ -474,7 +503,7 @@
         <a href="upload.html" class="export-btn" title="Importar bens patrimoniais via planilha Excel" style="margin-right: 8px;">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Importar por Planilha
         </a>
-        <button type="button" class="export-btn" onclick="openVideoModal()" title="Assistir tutorial em vídeo sobre o envio por planilha" style="margin-right: 8px; cursor: pointer; font-family: inherit;">
+        <button type="button" class="export-btn" onclick="openVideoModal('planilha')" title="Assistir tutorial em vídeo sobre o envio por planilha" style="margin-right: 8px; cursor: pointer; font-family: inherit;">
             <span class="play-dot">
                 <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="6 4 20 12 6 20"/></svg>
             </span>Tutorial em Vídeo
@@ -527,6 +556,11 @@
 
                     <h4>Ambiente de Homologação (Sandbox)</h4>
                     <p>Para utilizar o ambiente de homologação, é necessário criar uma conta no ambiente de <strong>staging</strong> do Login Único Gov.BR:</p>
+                    <button type="button" class="video-link-btn" onclick="openVideoModal('govbr')" title="Assistir tutorial em vídeo do cadastro da conta gov.br de homologação">
+                        <span class="play-dot">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="6 4 20 12 6 20"/></svg>
+                        </span>Assistir tutorial em vídeo do cadastro
+                    </button>
                     <ol>
                         <li>Acesse <a href="https://sso.staging.acesso.gov.br/" target="_blank">sso.staging.acesso.gov.br</a></li>
                         <li>Informe o CPF</li>
@@ -1434,15 +1468,14 @@ PUT /sispat/bens/
         <div class="video-modal-content">
             <div class="video-modal-header">
                 <h3 class="video-modal-title" id="videoModalTitle">
-                    Tutorial: Envio de bens via planilha
-                    <span class="video-modal-hint">Vídeo sem áudio — clique no <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg> nos controles para ativar o som</span>
+                    <span id="videoModalTitleText">Tutorial: Envio de bens via planilha</span>
+                    <span class="video-modal-hint" data-hint="planilha">Vídeo sem áudio — clique no <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg> nos controles para ativar o som</span>
+                    <span class="video-modal-hint" data-hint="govbr" style="display:none;">Vídeo com áudio narrado</span>
                 </h3>
                 <button class="video-modal-close" onclick="closeVideoModal()" aria-label="Fechar">&times;</button>
             </div>
             <div class="video-modal-body">
-                <video id="tutorialVideo" controls muted playsinline preload="metadata"
-                       data-src-desktop="tutorial-envio-planilha.webm"
-                       data-src-mobile="tutorial-envio-planilha-vertical.webm">
+                <video id="tutorialVideo" controls muted playsinline preload="metadata">
                     Seu navegador não suporta reprodução deste vídeo.
                 </video>
             </div>
@@ -1499,18 +1532,38 @@ PUT /sispat/bens/
         });
 
         // Modal de vídeo tutorial
-        function openVideoModal() {
+        var VIDEO_TUTORIALS = {
+            planilha: {
+                title: 'Tutorial: Envio de bens via planilha',
+                srcDesktop: 'tutorial-envio-planilha.webm',
+                srcMobile: 'tutorial-envio-planilha-vertical.webm',
+                muted: true
+            },
+            govbr: {
+                title: 'Tutorial: Cadastro da conta gov.br (Homologação)',
+                srcDesktop: 'tutorial-cadastro-govbr-staging.webm',
+                srcMobile: 'tutorial-cadastro-govbr-staging.webm',
+                muted: false
+            }
+        };
+        function openVideoModal(key) {
+            var which = VIDEO_TUTORIALS[key] ? key : 'planilha';
+            var cfg = VIDEO_TUTORIALS[which];
             var modal = document.getElementById('videoModal');
             var video = document.getElementById('tutorialVideo');
+            document.getElementById('videoModalTitleText').textContent = cfg.title;
+            document.querySelectorAll('.video-modal-hint').forEach(function(h) {
+                h.style.display = (h.dataset.hint === which) ? '' : 'none';
+            });
             var isMobile = window.matchMedia('(max-width: 768px)').matches;
-            var desiredSrc = isMobile ? video.dataset.srcMobile : video.dataset.srcDesktop;
+            var desiredSrc = isMobile ? cfg.srcMobile : cfg.srcDesktop;
             if (!video.src || video.src.indexOf(desiredSrc) === -1) {
                 video.src = desiredSrc;
             }
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
             try { video.currentTime = 0; } catch (e) { /* ignore */ }
-            video.muted = true;
+            video.muted = cfg.muted;
             var p = video.play();
             if (p && typeof p.catch === 'function') {
                 p.catch(function() { /* autoplay bloqueado: usuário usa controles */ });

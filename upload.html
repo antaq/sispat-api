@@ -3,6 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!--
+      Content-Security-Policy: restringe origens de scripts/estilos/imagens e, sobretudo,
+      limita as conexões de saída (connect-src) apenas aos hosts oficiais da API SisPAT.
+      Libs são servidas da mesma origem (./vendor). 'unsafe-inline' permanece necessário
+      enquanto houver handlers/estilos inline (refatorar para nonce é melhoria futura).
+    -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' https://prd-apex.antaq.gov.br data:; connect-src 'self' https://des-apex.antaq.gov.br https://prd-apex.antaq.gov.br; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'">
     <title>SISPAT - Importação por Planilha</title>
     <link rel="icon" type="image/png" href="https://prd-apex.antaq.gov.br/ords/r/sfc/120/files/static/v119/icons/app-icon-32.png">
     <style>
@@ -832,10 +839,10 @@
         </p>
     </div>
 
-    <!-- LIBRARIES -->
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+    <!-- LIBRARIES (auto-hospedadas na mesma origem — sem dependência de CDN de terceiros; SRI protege contra adulteração) -->
+    <script src="./vendor/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT"></script>
+    <script src="./vendor/exceljs.min.js" integrity="sha384-Pqp51FUN2/qzfxZxBCtF0stpc9ONI6MYZpVqmo8m20SoaQCzf+arZvACkLkirlPz"></script>
+    <script src="./vendor/FileSaver.min.js" integrity="sha384-PlRSzpewlarQuj5alIadXwjNUX+2eNMKwr0f07ShWYLy8B6TjEbm7ZlcN/ScSbwy"></script>
 
     <script>
     // Fecha dropdown ao clicar fora
@@ -883,6 +890,22 @@
     <script>
     (function() {
         'use strict';
+
+        // =====================================================================
+        // SECURITY HELPERS
+        // =====================================================================
+        // Escapa entidades HTML antes de interpolar dados NÃO confiáveis (valores da
+        // planilha do usuário e mensagens vindas do servidor) em innerHTML — evita
+        // XSS / injeção de DOM. Use SEMPRE que concatenar tais valores em markup.
+        function escapeHtml(value) {
+            if (value === null || value === undefined) return '';
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
 
         // =====================================================================
         // VALIDATION DATA (loaded from JSON files)
@@ -2035,18 +2058,18 @@
                     }
 
                     html += '<tr>';
-                    html += '<td>' + row.originalRowIndex + '</td>';
+                    html += '<td>' + escapeHtml(row.originalRowIndex) + '</td>';
                     html += '<td><span class="status-icon ' + statusClass + '">' + statusIcon + '</span></td>';
-                    html += '<td>' + (row.data.numero_registro_patrimonial || '-') + '</td>';
-                    html += '<td>' + (row.data.nome_item ? String(row.data.nome_item).substring(0, 60) : '-') + '</td>';
+                    html += '<td>' + escapeHtml(row.data.numero_registro_patrimonial || '-') + '</td>';
+                    html += '<td>' + (row.data.nome_item ? escapeHtml(String(row.data.nome_item).substring(0, 60)) : '-') + '</td>';
                     html += '<td>';
                     if (row.errors.length > 0 || row.warnings.length > 0) {
                         html += '<ul class="error-list">';
                         row.errors.forEach(function(e) {
-                            html += '<li>' + e + '</li>';
+                            html += '<li>' + escapeHtml(e) + '</li>';
                         });
                         row.warnings.forEach(function(w) {
-                            html += '<li class="warning-item">' + w + '</li>';
+                            html += '<li class="warning-item">' + escapeHtml(w) + '</li>';
                         });
                         html += '</ul>';
                     } else {
@@ -2290,11 +2313,11 @@
                     }
 
                     html += '<tr>';
-                    html += '<td>' + r.rowIndex + '</td>';
+                    html += '<td>' + escapeHtml(r.rowIndex) + '</td>';
                     html += '<td><span class="status-icon ' + statusClass + '">' + statusIcon + '</span></td>';
-                    html += '<td>' + (UIController.validationResults.find(function(v) { return v.originalRowIndex === r.rowIndex; }) || {}).data.numero_registro_patrimonial || '-';
+                    html += '<td>' + escapeHtml((UIController.validationResults.find(function(v) { return v.originalRowIndex === r.rowIndex; }) || {}).data.numero_registro_patrimonial || '-');
                     html += '</td>';
-                    html += '<td>' + resultText + '</td>';
+                    html += '<td>' + escapeHtml(resultText) + '</td>';
                     html += '</tr>';
                 });
 
@@ -2354,6 +2377,11 @@
                 this.clearFile();
                 document.getElementById('cardProgress').classList.add('hidden');
                 this._sendResults = [];
+                // Recomeço completo ("Nova Importação"): limpa a chave do campo para não
+                // deixá-la exposta/em memória após o uso (importante em máquina compartilhada).
+                // Obs.: "Remover"/"Recarregar" (clearFile) preservam a chave de propósito.
+                var keyInput = document.getElementById('apiKeyInput');
+                if (keyInput) keyInput.value = '';
             },
 
             _renderPagination: function(containerId, totalPages, currentPage, onPageChange) {

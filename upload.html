@@ -1717,6 +1717,50 @@
                 return result;
             },
 
+            // Detecta numero_registro_patrimonial repetido dentro da mesma planilha (escopo por CNPJ).
+            // A API usa CNPJ + nº de registro como chave do bem: linhas repetidas não criam bens novos,
+            // viram UPDATE do mesmo registro e apenas a última enviada prevalece. Quase sempre é
+            // desatenção do usuário, por isso é AVISO (não bloqueia o envio).
+            // Retorna { groups: [{cnpj, registro, rowIndexes}], rowMap: { originalRowIndex: {errors, warnings} } }.
+            findDuplicateRegistros: function(rows) {
+                function cnpjKey(d) { return String(d.cnpj == null ? '' : d.cnpj).replace(/\D/g, ''); }
+                function reg(d) { return d.numero_registro_patrimonial == null ? '' : String(d.numero_registro_patrimonial).trim(); }
+
+                var index = {}; // "cnpj|registro" -> grupo
+                var order = [];
+                rows.forEach(function(row) {
+                    var r = reg(row.data);
+                    if (!r) return; // ausência do nº de registro já é erro de campo obrigatório
+                    var key = cnpjKey(row.data) + '|' + r;
+                    if (!index[key]) {
+                        index[key] = { cnpj: cnpjKey(row.data), registro: r, rowIndexes: [] };
+                        order.push(key);
+                    }
+                    index[key].rowIndexes.push(row.originalRowIndex);
+                });
+
+                var groups = [], rowMap = {};
+                order.forEach(function(key) {
+                    var g = index[key];
+                    if (g.rowIndexes.length < 2) return;
+                    groups.push(g);
+
+                    var lastRow = g.rowIndexes[g.rowIndexes.length - 1];
+                    var lista = g.rowIndexes.join(', ');
+                    g.rowIndexes.forEach(function(idx) {
+                        var msg = '"Nº Registro Patrimonial": o valor "' + g.registro + '" se repete em ' +
+                            g.rowIndexes.length + ' linhas desta planilha (linhas ' + lista + '). ' +
+                            'Esse número é a chave do bem: as linhas repetidas NÃO criam bens novos, apenas atualizam o mesmo registro. ';
+                        msg += (idx === lastRow)
+                            ? 'Esta é a última ocorrência — é o conteúdo dela que prevalecerá, e as ' + g.rowIndexes.length + ' linhas resultarão em 1 único bem.'
+                            : 'O conteúdo desta linha será sobrescrito pela linha ' + lastRow + '. Se forem bens diferentes, use números de registro distintos.';
+                        rowMap[idx] = { errors: [], warnings: [msg] };
+                    });
+                });
+
+                return { groups: groups, rowMap: rowMap };
+            },
+
             buildApiPayload: function(record) {
                 var payload = {};
                 for (var i = 0; i < FIELD_KEYS.length; i++) {
@@ -1876,6 +1920,7 @@
         const UIController = {
             parsedRows: [],
             validationResults: [],
+            duplicateGroups: [],
             currentPage: 1,
             pageSize: 50,
             progressPage: 1,
@@ -1963,6 +2008,7 @@
                 document.getElementById('cardComprovante').classList.add('hidden');
                 this.parsedRows = [];
                 this.validationResults = [];
+                this.duplicateGroups = [];
             },
 
             runValidation: function() {
@@ -1987,6 +2033,15 @@
                     vr.isValid = vr.errors.length === 0;
                 });
 
+                // Nº de registro patrimonial repetido entre linhas (mesmo CNPJ) — aviso, não bloqueia
+                var duplicates = Validators.findDuplicateRegistros(this.parsedRows);
+                this.duplicateGroups = duplicates.groups;
+                this.validationResults.forEach(function(vr) {
+                    var extra = duplicates.rowMap[vr.originalRowIndex];
+                    if (!extra) return;
+                    if (extra.warnings.length) vr.warnings = vr.warnings.concat(extra.warnings);
+                });
+
                 this.currentPage = 1;
                 document.getElementById('cardValidation').classList.remove('hidden');
                 this.renderValidationSummary();
@@ -2003,6 +2058,12 @@
                 html += '<span class="summary-badge badge-valid">' + valid + ' válidas</span>';
                 if (errors > 0) html += '<span class="summary-badge badge-error">' + errors + ' com erros</span>';
                 if (withWarnings > 0) html += '<span class="summary-badge badge-warning">' + withWarnings + ' com avisos</span>';
+
+                var dupGroups = this.duplicateGroups || [];
+                var dupRows = dupGroups.reduce(function(acc, g) { return acc + g.rowIndexes.length; }, 0);
+                if (dupGroups.length > 0) {
+                    html += '<span class="summary-badge badge-warning">' + dupRows + ' linhas com nº de registro repetido</span>';
+                }
 
                 document.getElementById('validationSummary').innerHTML = html;
 
@@ -2030,6 +2091,35 @@
                     alertDiv.className = 'alert alert-warning';
                     alertDiv.innerHTML = '<strong>Atenção:</strong> A planilha contém <strong>' + cnpjCount + ' CNPJs diferentes</strong>. Sua chave de API pode estar vinculada a apenas um CNPJ. Linhas com CNPJ diferente receberão erro 403.';
                     document.getElementById('validationSummary').after(alertDiv);
+                }
+
+                // Nº de registro patrimonial repetido: alerta em destaque (a API faz UPDATE, não cria bem novo)
+                var existingDup = document.getElementById('alertDuplicateRegistros');
+                if (existingDup) existingDup.remove();
+                if (dupGroups.length > 0) {
+                    var bensFinais = total - (dupRows - dupGroups.length);
+                    var dupDiv = document.createElement('div');
+                    dupDiv.id = 'alertDuplicateRegistros';
+                    dupDiv.className = 'alert alert-warning';
+                    var dupHtml = '<strong>&#9888; Nº de Registro Patrimonial repetido na planilha</strong><br>' +
+                        'Foram encontrados <strong>' + dupGroups.length + ' número(s) de registro</strong> usados em mais de uma linha, ' +
+                        'totalizando <strong>' + dupRows + ' linhas</strong>. Como esse número é a <strong>chave do bem</strong>, ' +
+                        'a API não criará um bem para cada linha: ela irá <strong>atualizar o mesmo registro</strong>, e só a última linha enviada prevalecerá. ' +
+                        'Se estas linhas forem bens diferentes, corrija a planilha para usar números distintos antes de enviar.' +
+                        '<ul style="margin:8px 0 0 18px;">';
+
+                    var MAX_SHOWN = 10;
+                    dupGroups.slice(0, MAX_SHOWN).forEach(function(g) {
+                        dupHtml += '<li><strong>' + escapeHtml(g.registro) + '</strong> &mdash; linhas ' +
+                            escapeHtml(g.rowIndexes.join(', ')) + ' (' + g.rowIndexes.length + 'x)</li>';
+                    });
+                    if (dupGroups.length > MAX_SHOWN) {
+                        dupHtml += '<li>&hellip; e mais ' + (dupGroups.length - MAX_SHOWN) + ' número(s) repetido(s) &mdash; veja a coluna "Problemas" na tabela abaixo.</li>';
+                    }
+                    dupHtml += '</ul><div style="margin-top:8px;">Se enviar assim, as ' + total + ' linhas resultarão em aproximadamente <strong>' +
+                        bensFinais + ' bem(ns)</strong> no comprovante.</div>';
+                    dupDiv.innerHTML = dupHtml;
+                    document.getElementById('validationSummary').after(dupDiv);
                 }
             },
 
@@ -2102,6 +2192,17 @@
                 var details = '<strong>Ambiente:</strong> ' + (env === 'sandbox' ? 'Sandbox (Teste)' : 'Produção') + '<br>';
                 details += '<strong>Linhas a enviar:</strong> ' + validRows.length + '<br>';
                 details += '<strong>CNPJ(s):</strong> ' + Object.keys(cnpjs).join(', ') + '<br>';
+
+                // Reavalia duplicidades apenas sobre as linhas que serão de fato enviadas
+                var dupSend = Validators.findDuplicateRegistros(validRows).groups;
+                if (dupSend.length > 0) {
+                    var dupSendRows = dupSend.reduce(function(acc, g) { return acc + g.rowIndexes.length; }, 0);
+                    details += '<br><span style="color:#856404;font-weight:bold;">&#9888; ' + dupSendRows +
+                        ' das linhas a enviar repetem ' + dupSend.length + ' nº(s) de registro patrimonial.</span>' +
+                        '<br>Elas atualizarão o mesmo bem em vez de criar bens distintos &mdash; o comprovante mostrará apenas ' +
+                        (validRows.length - (dupSendRows - dupSend.length)) + ' bem(ns).<br>';
+                }
+
                 if (env === 'production') {
                     details += '<br><span style="color:#c0392b;font-weight:bold;">Os dados serão enviados para o ambiente de PRODUÇÃO!</span>';
                 }

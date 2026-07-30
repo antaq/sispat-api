@@ -965,21 +965,23 @@ components:
         capitulo:
           type: integer
           description: |
-            Capítulo NCM (Nomenclatura Comum do Mercosul).
+            Capítulo NCM (Nomenclatura Comum do Mercosul) — 2 dígitos, iguais aos 2 primeiros da subposição.
             A combinação de capítulo + posição + subposição é validada contra a tabela SISPAT_SUBPOSICOES.
           example: 84
         posicao:
           type: integer
           description: |
-            Posição NCM.
+            Posição NCM — 4 dígitos, iguais aos 4 primeiros da subposição (ex.: 8427 para a subposição 842710).
+            Informe os 4 dígitos completos, e não o sufixo da notação com pontos (8427.10 não vira posição 27).
             A combinação de capítulo + posição + subposição é validada contra a tabela SISPAT_SUBPOSICOES.
-          example: 26
+          example: 8427
         subposicao:
           type: integer
           description: |
-            Subposição NCM.
+            Subposição NCM — código completo de 6 dígitos (ex.: 842710).
+            Não informe apenas o sufixo (10) nem o NCM fiscal de 8 dígitos (84271000).
             A combinação de capítulo + posição + subposição é validada contra a tabela SISPAT_SUBPOSICOES.
-          example: 20
+          example: 842710
         cor:
           type: string
           description: Cor do bem.
@@ -1318,19 +1320,21 @@ components:
         capitulo:
           type: integer
           description: |
-            Capítulo NCM (Nomenclatura Comum do Mercosul).
+            Capítulo NCM (Nomenclatura Comum do Mercosul) — 2 dígitos, iguais aos 2 primeiros da subposição.
             A combinação de capítulo + posição + subposição é validada contra a tabela SISPAT_SUBPOSICOES.
           example: 84
         posicao:
           type: integer
           description: |
-            Posição NCM.
+            Posição NCM — 4 dígitos, iguais aos 4 primeiros da subposição (ex.: 8427 para a subposição 842710).
+            Informe os 4 dígitos completos, e não o sufixo da notação com pontos (8427.10 não vira posição 27).
             A combinação de capítulo + posição + subposição é validada contra a tabela SISPAT_SUBPOSICOES.
           example: 8427
         subposicao:
           type: integer
           description: |
-            Subposição NCM.
+            Subposição NCM — código completo de 6 dígitos (ex.: 842710).
+            Não informe apenas o sufixo (10) nem o NCM fiscal de 8 dígitos (84271000).
             A combinação de capítulo + posição + subposição é validada contra a tabela SISPAT_SUBPOSICOES.
           example: 842710
         nome_item:

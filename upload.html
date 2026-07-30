@@ -1036,9 +1036,9 @@
             numero_registro_patrimonial_pai: { label: 'Nº Registro Patrimonial Pai', required: false, type: 'string', maxLength: 50, example: '', description: 'Nº de registro do bem PAI, para vincular bens acessórios (filhos) a um bem principal. Opcional. Hierarquia de 1 nível: o pai não pode ter pai, e o bem não pode ser pai de si mesmo. O pai deve existir para o mesmo CNPJ (validado no servidor).' },
             numero_do_contrato:          { label: 'Nº do Contrato', required: true, type: 'string', maxLength: 255, example: 'CT-2024-001', description: 'Número do contrato vinculado' },
             cod_trigrama:                { label: 'Cód. Trigrama', required: false, type: 'string', maxLength: 3, example: 'GND', description: 'Código trigrama do porto brasileiro (validado contra tabela SISPAT)' },
-            capitulo:                    { label: 'Capítulo NCM', required: true, type: 'integer', example: 84, description: 'Capítulo NCM' },
-            posicao:                     { label: 'Posição NCM', required: true, type: 'integer', example: 8427, description: 'Posição NCM' },
-            subposicao:                  { label: 'Subposição NCM', required: true, type: 'integer', example: 842710, description: 'Subposição NCM' },
+            capitulo:                    { label: 'Capítulo NCM', required: true, type: 'integer', example: 84, description: 'Capítulo NCM — 2 dígitos, iguais aos 2 primeiros da subposição (ex.: 84 para a subposição 842710)' },
+            posicao:                     { label: 'Posição NCM', required: true, type: 'integer', example: 8427, description: 'Posição NCM — 4 dígitos, iguais aos 4 primeiros da subposição (ex.: 8427 para a subposição 842710). Informe os 4 dígitos completos, e não apenas o sufixo (27)' },
+            subposicao:                  { label: 'Subposição NCM', required: true, type: 'integer', example: 842710, description: 'Subposição NCM — código completo de 6 dígitos (ex.: 842710). Não use apenas o sufixo (10) nem o NCM fiscal de 8 dígitos (84271000)' },
             nome_item:                   { label: 'Nome do Item', required: true, type: 'string', maxLength: 4000, example: 'Guindaste portuário', description: 'Nome/descrição do bem' },
             especificacao_tecnica:       { label: 'Especificação Técnica', required: true, type: 'string', maxLength: 4000, example: 'Guindaste móvel sobre pneus, capacidade 50t', description: 'Especificação técnica detalhada' },
             cor:                         { label: 'Cor', required: false, type: 'string', example: 'Amarelo', description: 'Cor do bem' },
@@ -1122,11 +1122,21 @@
                 var headerRow = dataSheet.getRow(1);
                 var labelRow = dataSheet.getRow(2);
 
+                // Notas (comentários do Excel) nos cabeçalhos que geram mais dúvida.
+                // O trio NCM é hierárquico e repete dígitos — quem parte da notação fiscal
+                // (ex.: 9406.90.00) tende a preencher só os sufixos: 94 / 06 / 90.
+                var HEADER_NOTES = {
+                    capitulo: 'Capítulo NCM: 2 dígitos.\nSão os 2 PRIMEIROS DÍGITOS da subposição.\nEx.: subposição 940690 -> capitulo 94',
+                    posicao: 'Posição NCM: 4 dígitos.\nSão os 4 PRIMEIROS DÍGITOS da subposição (não é o sufixo).\nEx.: subposição 940690 -> posicao 9406 (e não 06)',
+                    subposicao: 'Subposição NCM: código COMPLETO de 6 dígitos.\nEx.: 940690 (e não 90).\nNão use o NCM fiscal de 8 dígitos (94069000).\nConsulte a tabela de subposições do SisPAT.'
+                };
+
                 FIELD_KEYS.forEach(function(key, i) {
                     var def = FIELD_DEFINITIONS[key];
                     var col = i + 1;
 
                     headerRow.getCell(col).value = key;
+                    if (HEADER_NOTES[key]) headerRow.getCell(col).note = HEADER_NOTES[key];
                     headerRow.getCell(col).font = { bold: true, size: 11, color: { argb: 'FFFFFFFF' } };
                     headerRow.getCell(col).fill = {
                         type: 'pattern', pattern: 'solid',
@@ -1245,6 +1255,7 @@
                 refSheet.getRow(noteRow + 2).getCell(1).value = '2. Se depreciacao_especial = 1 (Sim), desc_deprec_especial é obrigatório';
                 refSheet.getRow(noteRow + 3).getCell(1).value = '3. Os campos conta_contabil, conta_contabil_depreciacao, NCM (capitulo+posicao+subposicao) e cod_trigrama são validados localmente e no servidor.';
                 refSheet.getRow(noteRow + 4).getCell(1).value = '4. numero_registro_patrimonial_pai (opcional): vincula um bem filho a um bem pai. Hierarquia de 1 nível — o bem não pode ser pai de si mesmo; o pai não pode ter pai; um bem que já é pai não pode virar filho; o pai deve existir para o mesmo CNPJ.';
+                refSheet.getRow(noteRow + 5).getCell(1).value = '5. NCM: o trio capitulo/posicao/subposicao é hierárquico e repete dígitos — capitulo = 2 primeiros dígitos da subposição; posicao = 4 primeiros; subposicao = os 6 dígitos completos. Ex.: 94 / 9406 / 940690. Não desmembre a notação fiscal (9406.90.00 daria 94 / 06 / 90, que é inválido) nem use o NCM de 8 dígitos.';
 
                 // Generate and download
                 var buffer = await wb.xlsx.writeBuffer();
@@ -1622,21 +1633,51 @@
                     }
                 }
 
-                // Validação: subposição NCM deve ter 6 dígitos (não o NCM completo de 8).
-                // Roda mesmo sem a tabela de referência carregada — pega o erro mais comum.
+                // Validação: subposição NCM deve ter exatamente 6 dígitos.
+                // Roda mesmo sem a tabela de referência carregada — pega os dois erros mais
+                // comuns: o NCM fiscal de 8 dígitos (94069000) e o sufixo da notação com
+                // pontos (9406.90.00 preenchido como 94 / 06 / 90).
+                var subDigits = '';
                 if (record.subposicao !== null && record.subposicao !== undefined && record.subposicao !== '') {
-                    var subDigits = String(record.subposicao).replace(/\D/g, '');
+                    subDigits = String(record.subposicao).replace(/\D/g, '');
                     if (subDigits.length > 6) {
                         errors.push('"Subposição NCM": deve ter 6 dígitos (você informou ' + subDigits.length +
                             ' — provavelmente o NCM completo de 8 dígitos; use apenas os 6 primeiros, ex.: ' +
                             subDigits.substring(0, 6) + ')');
+                    } else if (subDigits.length < 6) {
+                        var posDigits = record.posicao ? String(record.posicao).replace(/\D/g, '') : '';
+                        var palpite = posDigits.length === 4 && subDigits.length <= 2
+                            ? posDigits + subDigits.padStart(2, '0')
+                            : null;
+                        errors.push('"Subposição NCM": deve ter 6 dígitos (você informou ' + subDigits.length +
+                            ' — a subposição é o código completo, e não o sufixo da notação NCM com pontos)' +
+                            (palpite ? '. Para a posição ' + record.posicao + ', provavelmente é ' + palpite : ''));
+                    }
+                }
+
+                // Validação: posição NCM deve ter 4 dígitos e capítulo 2 dígitos.
+                // Independe da tabela de referência e do acerto da subposição.
+                if (record.posicao !== null && record.posicao !== undefined && record.posicao !== '') {
+                    var posDig = String(record.posicao).replace(/\D/g, '');
+                    if (posDig.length !== 4) {
+                        var palpitePos = (posDig.length < 4 && subDigits.length === 6) ? subDigits.substring(0, 4) : null;
+                        errors.push('"Posição NCM": deve ter 4 dígitos (você informou ' + posDig.length +
+                            ' — a posição são os 4 primeiros dígitos da subposição, e não o sufixo da notação com pontos)' +
+                            (palpitePos ? '. Provavelmente é ' + palpitePos : ''));
+                    }
+                }
+                if (record.capitulo !== null && record.capitulo !== undefined && record.capitulo !== '') {
+                    var capDig = String(record.capitulo).replace(/\D/g, '');
+                    if (capDig.length > 2) {
+                        errors.push('"Capítulo NCM": deve ter 2 dígitos (você informou ' + capDig.length +
+                            ' — o capítulo são os 2 primeiros dígitos da subposição, ex.: ' + capDig.substring(0, 2) + ')');
                     }
                 }
 
                 // Validação local: NCM (capitulo + posicao + subposicao).
-                // Pula o lookup quando a subposição tem mais de 6 dígitos — esse caso já é
-                // reportado pela mensagem específica acima (evita erro duplicado).
-                var subOk6 = String(record.subposicao).replace(/\D/g, '').length <= 6;
+                // Pula o lookup quando a subposição não tem 6 dígitos — esse caso já é
+                // reportado pelas mensagens específicas acima (evita erro duplicado).
+                var subOk6 = subDigits.length === 6;
                 if (record.capitulo && record.posicao && record.subposicao && subOk6) {
                     if (SUBPOSICOES_NCM) {
                         var sub = Number(record.subposicao);
